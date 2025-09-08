@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState } from "react";
+import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +29,7 @@ function SubmitButton() {
 }
 
 export default function AiRecommendations() {
-  const [state, formAction] = useFormState(getRecommendations, initialState);
+  const [state, formAction] = useActionState(getRecommendations, initialState);
 
   return (
     <div>
