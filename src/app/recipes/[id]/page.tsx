@@ -3,20 +3,18 @@ import type { Recipe } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
   Clock,
   Users,
   ChefHat,
-  Printer,
   Vegan,
   WheatOff,
   Zap,
 } from 'lucide-react';
 import React from 'react';
+import RecipePrintButton from '@/components/recipe-print-button';
 
 function getRecipe(id: string): Recipe | undefined {
   return recipes.find((recipe) => recipe.id === id);
@@ -34,10 +32,6 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   if (!recipe) {
     notFound();
   }
-
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <div className="container mx-auto px-4 py-8 print-container">
@@ -98,9 +92,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         </div>
 
         <aside className="space-y-8 md:col-span-1">
-          <Button onClick={handlePrint} className="w-full no-print">
-            <Printer className="mr-2 h-4 w-4" /> Print Recipe
-          </Button>
+          <RecipePrintButton />
 
           <Card>
             <CardContent className="p-6">
