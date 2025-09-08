@@ -12,9 +12,18 @@ import {
   Vegan,
   WheatOff,
   Zap,
+  DollarSign,
 } from 'lucide-react';
 import React from 'react';
 import RecipePrintButton from '@/components/recipe-print-button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 function getRecipe(id: string): Recipe | undefined {
   return recipes.find((recipe) => recipe.id === id);
@@ -25,6 +34,12 @@ const tagIcons: { [key in Recipe['tags'][number]]: React.ReactNode } = {
   Vegan: <Vegan className="h-4 w-4 mr-2" />,
   'Gluten-Free': <WheatOff className="h-4 w-4 mr-2" />,
 };
+
+const dummyOrders = [
+    { id: 'ORD001', user: 'Bob Johnson', timestamp: '2024-05-20 10:30 AM' },
+    { id: 'ORD002', user: 'Charlie Brown', timestamp: '2024-05-20 11:15 AM' },
+    { id: 'ORD003', user: 'Diana Prince', timestamp: '2024-05-21 09:00 AM' },
+];
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const recipe = getRecipe(params.id);
@@ -37,18 +52,24 @@ export default function RecipePage({ params }: { params: { id: string } }) {
     <div className="container mx-auto px-4 py-8 print-container">
       <header className="mb-8 no-print">
         <h1 className="text-4xl font-bold font-headline mb-2">{recipe.title}</h1>
-        <div className="flex items-center text-muted-foreground">
-          <Avatar className="h-8 w-8 mr-2">
-            <AvatarImage src={recipe.authorImage} alt={recipe.author} />
-            <AvatarFallback>{recipe.author.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span>By {recipe.author}</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center text-muted-foreground">
+            <Avatar className="h-8 w-8 mr-2">
+              <AvatarImage src={recipe.authorImage} alt={recipe.author} />
+              <AvatarFallback>{recipe.author.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span>By {recipe.author}</span>
+          </div>
+          <div className="flex items-center text-2xl font-bold text-primary">
+            <DollarSign className="h-6 w-6 mr-1" />
+            <span>{recipe.price.toFixed(2)}</span>
+          </div>
         </div>
       </header>
       
       <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <div className="relative h-96 w-full rounded-lg overflow-hidden mb-8 shadow-lg">
+        <div className="md:col-span-2 space-y-8">
+          <div className="relative h-96 w-full rounded-lg overflow-hidden shadow-lg">
             <Image
               src={recipe.imageUrl}
               alt={recipe.title}
@@ -58,9 +79,9 @@ export default function RecipePage({ params }: { params: { id: string } }) {
             />
           </div>
 
-          <p className="text-lg mb-8">{recipe.description}</p>
+          <p className="text-lg">{recipe.description}</p>
 
-          <Card className="mb-8">
+          <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl">Ingredients</CardTitle>
             </CardHeader>
@@ -89,6 +110,34 @@ export default function RecipePage({ params }: { params: { id: string } }) {
               </ol>
             </CardContent>
           </Card>
+
+          <Card className="no-print">
+            <CardHeader>
+              <CardTitle className="font-headline text-2xl">Order History</CardTitle>
+              <p className="text-sm text-muted-foreground">Recent orders for this recipe.</p>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Order ID</TableHead>
+                            <TableHead>User</TableHead>
+                            <TableHead>Timestamp</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {dummyOrders.map((order) => (
+                            <TableRow key={order.id}>
+                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell>{order.user}</TableCell>
+                                <TableCell>{order.timestamp}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+          </Card>
+
         </div>
 
         <aside className="space-y-8 md:col-span-1">

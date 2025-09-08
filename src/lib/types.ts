@@ -18,6 +18,7 @@ export type Recipe = {
     fat: number;
     carbs: number;
   };
+  price: number;
 };
 
 export type MapLocation = {

@@ -34,6 +34,7 @@ export const recipes: Recipe[] = [
       fat: 10,
       carbs: 75,
     },
+    price: 12.99,
   },
   {
     id: '2',
@@ -69,6 +70,7 @@ export const recipes: Recipe[] = [
       fat: 18,
       carbs: 38,
     },
+    price: 24.50,
   },
   {
     id: '3',
@@ -102,6 +104,7 @@ export const recipes: Recipe[] = [
       fat: 25,
       carbs: 30,
     },
+    price: 9.75,
   },
   {
     id: '4',
@@ -135,6 +138,7 @@ export const recipes: Recipe[] = [
         fat: 20,
         carbs: 18,
     },
+    price: 14.00,
   },
   {
     id: '5',
@@ -171,6 +175,7 @@ export const recipes: Recipe[] = [
         fat: 35,
         carbs: 20,
     },
+    price: 18.25,
   },
     {
     id: '6',
@@ -205,6 +210,7 @@ export const recipes: Recipe[] = [
         fat: 2,
         carbs: 45,
     },
+    price: 11.00,
   },
 ];
 
