@@ -17,6 +17,8 @@ export type Recipe = {
     carbs: number;
   };
   price: number;
+  location?: string;
+  contact?: string;
 };
 
 export type MapLocation = {

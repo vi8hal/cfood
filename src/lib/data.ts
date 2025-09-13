@@ -33,6 +33,8 @@ export const recipes: Recipe[] = [
       carbs: 75,
     },
     price: 12.99,
+    location: 'San Francisco, CA',
+    contact: 'jane.doe@example.com',
   },
   {
     id: '2',
@@ -67,6 +69,8 @@ export const recipes: Recipe[] = [
       carbs: 38,
     },
     price: 24.50,
+    location: 'Oakland, CA',
+    contact: 'john.smith@example.com',
   },
   {
     id: '3',
@@ -84,7 +88,7 @@ export const recipes: Recipe[] = [
     instructions: [
       'Toast the sourdough bread slices to your liking.',
       'In a small bowl, mash the avocado with lemon juice.',
-      'Spread the mashed avocado evenly on the toast.',
+      'Spread the mashed avocado on the toast.',
       'Top with crumbled feta cheese and a pinch of red pepper flakes.',
       'Serve immediately.',
     ],
@@ -99,6 +103,8 @@ export const recipes: Recipe[] = [
       carbs: 30,
     },
     price: 9.75,
+    location: 'Berkeley, CA',
+    contact: 'alice.j@example.com',
   },
   {
     id: '4',
@@ -131,6 +137,8 @@ export const recipes: Recipe[] = [
         carbs: 18,
     },
     price: 14.00,
+    location: 'San Mateo, CA',
+    contact: 'mike.b@example.com',
   },
   {
     id: '5',
@@ -166,6 +174,8 @@ export const recipes: Recipe[] = [
         carbs: 20,
     },
     price: 18.25,
+    location: 'Palo Alto, CA',
+    contact: 'sarah.l@example.com',
   },
     {
     id: '6',
@@ -199,6 +209,8 @@ export const recipes: Recipe[] = [
         carbs: 45,
     },
     price: 11.00,
+    location: 'San Jose, CA',
+    contact: 'chris.g@example.com',
   },
 ];
 

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, Mail, MapPin } from 'lucide-react';
 import React from 'react';
 import RecipePrintButton from '@/components/recipe-print-button';
 import {
@@ -128,6 +128,25 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         <aside className="space-y-8 md:col-span-1">
           <RecipePrintButton />
           <RecipeMetadata recipe={recipe} />
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline">Contact & Pickup</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {recipe.location && (
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  <span className='font-medium'>{recipe.location}</span>
+                </div>
+              )}
+              {recipe.contact && (
+                <div className="flex items-center">
+                  <Mail className="h-4 w-4 mr-2" />
+                  <a href={`mailto:${recipe.contact}`} className='font-medium hover:underline'>{recipe.contact}</a>
+                </div>
+              )}
+            </CardContent>
+          </Card>
           <RecipeDetails tags={recipe.tags} />
           <NutritionFacts nutrition={recipe.nutrition} />
         </aside>
