@@ -11,14 +11,15 @@ import placeholderImages from '@/lib/placeholder-images.json';
 
 export default function Home() {
   const featuredRecipes = recipes.slice(0, 6);
+  const heroImage = placeholderImages.hero;
 
   return (
     <div className="flex flex-col">
       <section className="relative w-full h-[60vh] md:h-[70vh]">
         <Image
-          src={placeholderImages.hero.src}
-          alt={placeholderImages.hero.alt}
-          data-ai-hint={placeholderImages.hero.hint}
+          src={heroImage.src}
+          alt={heroImage.alt}
+          data-ai-hint={heroImage.hint}
           fill
           priority
           className="object-cover"
