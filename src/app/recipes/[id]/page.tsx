@@ -1,19 +1,11 @@
-import { recipes } from '@/lib/data';
+import { recipes, dummyOrders } from '@/lib/data';
 import type { Recipe } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import {
-  Clock,
-  Users,
-  ChefHat,
-  Vegan,
-  WheatOff,
-  Zap,
-  DollarSign,
-} from 'lucide-react';
+import { DollarSign } from 'lucide-react';
 import React from 'react';
 import RecipePrintButton from '@/components/recipe-print-button';
 import {
@@ -24,22 +16,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { RecipeMetadata } from '@/components/recipe-metadata';
+import { RecipeDetails } from '@/components/recipe-details';
+import { NutritionFacts } from '@/components/nutrition-facts';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 function getRecipe(id: string): Recipe | undefined {
   return recipes.find((recipe) => recipe.id === id);
 }
-
-const tagIcons: { [key in Recipe['tags'][number]]: React.ReactNode } = {
-  Quick: <Zap className="h-4 w-4 mr-2" />,
-  Vegan: <Vegan className="h-4 w-4 mr-2" />,
-  'Gluten-Free': <WheatOff className="h-4 w-4 mr-2" />,
-};
-
-const dummyOrders = [
-    { id: 'ORD001', user: 'Bob Johnson', timestamp: '2024-05-20 10:30 AM' },
-    { id: 'ORD002', user: 'Charlie Brown', timestamp: '2024-05-20 11:15 AM' },
-    { id: 'ORD003', user: 'Diana Prince', timestamp: '2024-05-21 09:00 AM' },
-];
 
 export default function RecipePage({ params }: { params: { id: string } }) {
   const recipe = getRecipe(params.id);
@@ -47,6 +31,8 @@ export default function RecipePage({ params }: { params: { id: string } }) {
   if (!recipe) {
     notFound();
   }
+  
+  const recipeImage = (placeholderImages.recipes as any)[recipe.id] || { src: 'https://picsum.photos/seed/1/600/400', alt: 'Placeholder', hint: 'food' };
 
   return (
     <div className="container mx-auto px-4 py-8 print-container">
@@ -71,9 +57,9 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         <div className="md:col-span-2 space-y-8">
           <div className="relative h-96 w-full rounded-lg overflow-hidden shadow-lg">
             <Image
-              src={recipe.imageUrl}
+              src={recipeImage.src}
               alt={recipe.title}
-              data-ai-hint={recipe.imageHint}
+              data-ai-hint={recipeImage.hint}
               fill
               className="object-cover"
             />
@@ -142,70 +128,9 @@ export default function RecipePage({ params }: { params: { id: string } }) {
 
         <aside className="space-y-8 md:col-span-1">
           <RecipePrintButton />
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex justify-around text-center">
-                <div>
-                  <Clock className="h-6 w-6 mx-auto mb-2 text-primary" />
-                  <p className="font-semibold">{recipe.prepTime} min</p>
-                  <p className="text-sm text-muted-foreground">Prep</p>
-                </div>
-                <div>
-                  <ChefHat className="h-6 w-6 mx-auto mb-2 text-primary" />
-                  <p className="font-semibold">{recipe.cookTime} min</p>
-                  <p className="text-sm text-muted-foreground">Cook</p>
-                </div>
-                <div>
-                  <Users className="h-6 w-6 mx-auto mb-2 text-primary" />
-                  <p className="font-semibold">{recipe.servings}</p>
-                  <p className="text-sm text-muted-foreground">Servings</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Details</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {recipe.tags.map(tag => (
-                <div key={tag} className="flex items-center">
-                  {tagIcons[tag]}
-                  <span className='font-medium'>{tag}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Nutrition Facts</CardTitle>
-              <p className="text-sm text-muted-foreground">per serving</p>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span>Calories</span>
-                <span className="font-semibold">{recipe.nutrition.calories}</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span>Fat</span>
-                <span>{recipe.nutrition.fat}g</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span>Carbs</span>
-                <span>{recipe.nutrition.carbs}g</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span>Protein</span>
-                <span>{recipe.nutrition.protein}g</span>
-              </div>
-            </CardContent>
-          </Card>
+          <RecipeMetadata recipe={recipe} />
+          <RecipeDetails tags={recipe.tags} />
+          <NutritionFacts nutrition={recipe.nutrition} />
         </aside>
       </div>
     </div>

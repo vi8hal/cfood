@@ -7,8 +7,6 @@ export const recipes: Recipe[] = [
     description: 'A quick and delicious pasta dish with a spicy tomato sauce, perfect for a weeknight dinner.',
     author: 'Jane Doe',
     authorImage: 'https://i.pravatar.cc/150?u=jane_doe',
-    imageUrl: 'https://picsum.photos/600/400',
-    imageHint: 'pasta dish',
     ingredients: [
       { item: 'Pasta', quantity: '500g' },
       { item: 'Canned Tomatoes', quantity: '1 can' },
@@ -42,8 +40,6 @@ export const recipes: Recipe[] = [
     description: 'A rich and moist chocolate cake that you would never guess is gluten-free.',
     author: 'John Smith',
     authorImage: 'https://i.pravatar.cc/150?u=john_smith',
-    imageUrl: 'https://picsum.photos/600/401',
-    imageHint: 'chocolate cake',
     ingredients: [
       { item: 'Gluten-Free Flour', quantity: '2 cups' },
       { item: 'Sugar', quantity: '1 cup' },
@@ -78,8 +74,6 @@ export const recipes: Recipe[] = [
     description: 'The classic avocado toast, elevated with feta cheese and a sprinkle of red pepper flakes.',
     author: 'Alice Johnson',
     authorImage: 'https://i.pravatar.cc/150?u=alice_j',
-    imageUrl: 'https://picsum.photos/600/402',
-    imageHint: 'avocado toast',
     ingredients: [
       { item: 'Sourdough Bread', quantity: '2 slices' },
       { item: 'Avocado', quantity: '1' },
@@ -112,8 +106,6 @@ export const recipes: Recipe[] = [
     description: 'A refreshing and light salad, packed with mixed greens, fresh berries, and a tangy vinaigrette.',
     author: 'Mike Brown',
     authorImage: 'https://i.pravatar.cc/150?u=mike_b',
-    imageUrl: 'https://picsum.photos/600/403',
-    imageHint: 'berry salad',
     ingredients: [
         { item: 'Mixed Greens', quantity: '5 oz' },
         { item: 'Strawberries, sliced', quantity: '1 cup' },
@@ -146,8 +138,6 @@ export const recipes: Recipe[] = [
     description: 'A complete meal cooked on a single sheet pan, featuring tender chicken and roasted vegetables with a lemon-herb sauce.',
     author: 'Sarah Lee',
     authorImage: 'https://i.pravatar.cc/150?u=sarah_l',
-    imageUrl: 'https://picsum.photos/600/404',
-    imageHint: 'roast chicken',
     ingredients: [
         { item: 'Chicken Thighs', quantity: '4' },
         { item: 'Baby Potatoes, halved', quantity: '1 lb' },
@@ -183,8 +173,6 @@ export const recipes: Recipe[] = [
     description: 'A hearty and nutritious vegan lentil soup that is easy to make and full of flavor.',
     author: 'Chris Green',
     authorImage: 'https://i.pravatar.cc/150?u=chris_g',
-    imageUrl: 'https://picsum.photos/600/405',
-    imageHint: 'lentil soup',
     ingredients: [
         { item: 'Brown Lentils', quantity: '1 cup' },
         { item: 'Vegetable Broth', quantity: '4 cups' },
@@ -243,4 +231,10 @@ export const mapLocations: MapLocation[] = [
     recipeTitle: 'One-Pan Lemon Herb Chicken',
     position: { lat: 34.06, lng: -118.23 },
   },
+];
+
+export const dummyOrders = [
+    { id: 'ORD001', user: 'Bob Johnson', timestamp: '2024-05-20 10:30 AM' },
+    { id: 'ORD002', user: 'Charlie Brown', timestamp: '2024-05-20 11:15 AM' },
+    { id: 'ORD003', user: 'Diana Prince', timestamp: '2024-05-21 09:00 AM' },
 ];

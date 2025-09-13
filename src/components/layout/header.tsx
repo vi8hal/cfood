@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import placeholderImages from "@/lib/placeholder-images.json";
 
 const navLinks = [
   { href: "/recipes", label: "Recipes", icon: ChefHat },
@@ -124,9 +125,9 @@ export function AppHeader() {
                     <div className="flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent">
                       <Avatar className="mt-px h-8 w-8">
                         <AvatarImage
-                          src="https://picsum.photos/600/400"
-                          alt="Spicy Tomato Pasta"
-                          data-ai-hint="pasta dish"
+                          src={(placeholderImages.recipes as any)['1'].src}
+                          alt={(placeholderImages.recipes as any)['1'].alt}
+                          data-ai-hint={(placeholderImages.recipes as any)['1'].hint}
                         />
                         <AvatarFallback>SP</AvatarFallback>
                       </Avatar>

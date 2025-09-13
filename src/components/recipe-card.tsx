@@ -5,23 +5,27 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Recipe } from '@/lib/types';
 import { Clock, DollarSign } from 'lucide-react';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
+  const recipeImage = (placeholderImages.recipes as any)[recipe.id] || { src: 'https://picsum.photos/seed/1/600/400', alt: 'Placeholder', hint: 'food', width: 600, height: 400 };
+
   return (
     <Link href={`/recipes/${recipe.id}`} className="group">
       <Card className="h-full overflow-hidden transition-all group-hover:shadow-lg group-hover:-translate-y-1 duration-300 flex flex-col">
         <CardHeader className="p-0">
           <div className="relative h-48 w-full">
             <Image
-              src={recipe.imageUrl}
+              src={recipeImage.src}
               alt={`Image of ${recipe.title}`}
-              data-ai-hint={recipe.imageHint}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              data-ai-hint={recipeImage.hint}
+              width={recipeImage.width}
+              height={recipeImage.height}
+              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
             />
           </div>
         </CardHeader>

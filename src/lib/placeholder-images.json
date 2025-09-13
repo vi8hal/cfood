@@ -1,0 +1,54 @@
+
+{
+    "hero": {
+        "src": "https://picsum.photos/seed/hero/1800/1200",
+        "alt": "A vibrant spread of delicious food on a table",
+        "hint": "food spread",
+        "width": 1800,
+        "height": 1200
+    },
+    "recipes": {
+        "1": {
+            "src": "https://picsum.photos/seed/pasta/600/400",
+            "alt": "Spicy Tomato Pasta",
+            "hint": "pasta dish",
+            "width": 600,
+            "height": 400
+        },
+        "2": {
+            "src": "https://picsum.photos/seed/cake/600/400",
+            "alt": "Gluten-Free Chocolate Cake",
+            "hint": "chocolate cake",
+            "width": 600,
+            "height": 400
+        },
+        "3": {
+            "src": "https://picsum.photos/seed/avocado/600/400",
+            "alt": "Avocado Toast with a Twist",
+            "hint": "avocado toast",
+            "width": 600,
+            "height": 400
+        },
+        "4": {
+            "src": "https://picsum.photos/seed/salad/600/400",
+            "alt": "Summer Berry Salad",
+            "hint": "berry salad",
+            "width": 600,
+            "height": 400
+        },
+        "5": {
+            "src": "https://picsum.photos/seed/chicken/600/400",
+            "alt": "One-Pan Lemon Herb Chicken",
+            "hint": "roast chicken",
+            "width": 600,
+            "height": 400
+        },
+        "6": {
+            "src": "https://picsum.photos/seed/soup/600/400",
+            "alt": "Vegan Lentil Soup",
+            "hint": "lentil soup",
+            "width": 600,
+            "height": 400
+        }
+    }
+}

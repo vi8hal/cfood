@@ -4,8 +4,6 @@ export type Recipe = {
   description: string;
   author: string;
   authorImage: string;
-  imageUrl: string;
-  imageHint: string;
   ingredients: { item: string; quantity: string }[];
   instructions: string[];
   prepTime: number; // in minutes

@@ -7,6 +7,7 @@ import { Search } from 'lucide-react';
 import { RecipeCard } from '@/components/recipe-card';
 import { recipes } from '@/lib/data';
 import AiRecommendations from '@/components/ai-recommendations';
+import placeholderImages from '@/lib/placeholder-images.json';
 
 export default function Home() {
   const featuredRecipes = recipes.slice(0, 6);
@@ -15,10 +16,11 @@ export default function Home() {
     <div className="flex flex-col">
       <section className="relative w-full h-[60vh] md:h-[70vh]">
         <Image
-          src="https://picsum.photos/1800/1200"
-          alt="A vibrant spread of delicious food on a table"
-          data-ai-hint="food spread"
+          src={placeholderImages.hero.src}
+          alt={placeholderImages.hero.alt}
+          data-ai-hint={placeholderImages.hero.hint}
           fill
+          priority
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
