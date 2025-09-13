@@ -24,6 +24,9 @@ const recipeSchema = z.object({
   description: z
     .string()
     .min(10, "Description must be at least 10 characters long"),
+  price: z.coerce.number().min(0, "Price must be a positive number or 0 for free"),
+  location: z.string().min(3, "Location is required"),
+  contact: z.string().min(3, "Contact info is required"),
   ingredients: z
     .string()
     .min(10, "Please list at least one ingredient"),
@@ -47,6 +50,8 @@ export function RecipeUploadForm() {
     defaultValues: {
       title: "",
       description: "",
+      location: "",
+      contact: "",
       ingredients: "",
       instructions: "",
     },
@@ -100,6 +105,50 @@ export function RecipeUploadForm() {
                 </FormItem>
               )}
             />
+            <div className="grid md:grid-cols-2 gap-8">
+               <FormField
+                control={form.control}
+                name="price"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Price</FormLabel>
+                    <FormControl>
+                        <Input type="number" placeholder="12.99 or 0 if free" {...field} />
+                    </FormControl>
+                    <FormDescription>Enter a price for your dish, or 0 if it's free.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                control={form.control}
+                name="location"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Location</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., San Francisco, CA" {...field} />
+                    </FormControl>
+                     <FormDescription>Where can this be picked up?</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
+                control={form.control}
+                name="contact"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Contact Info</FormLabel>
+                    <FormControl>
+                        <Input placeholder="e.g., your-email@example.com or phone number" {...field} />
+                    </FormControl>
+                    <FormDescription>How can people contact you about this recipe?</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
             <div className="grid md:grid-cols-3 gap-8">
                 <FormField
                 control={form.control}
