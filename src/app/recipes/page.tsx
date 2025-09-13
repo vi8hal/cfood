@@ -11,19 +11,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search } from 'lucide-react';
+import { MapPin, Search } from 'lucide-react';
 
 export default function RecipesPage() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [locationTerm, setLocationTerm] = useState('');
   const [tagFilter, setTagFilter] = useState('all');
 
   const filteredRecipes = allRecipes.filter((recipe) => {
     const matchesSearch = recipe.title
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+    const matchesLocation = recipe.location
+      ?.toLowerCase()
+      .includes(locationTerm.toLowerCase());
     const matchesTag =
       tagFilter === 'all' || recipe.tags.includes(tagFilter as any);
-    return matchesSearch && matchesTag;
+    return matchesSearch && matchesTag && matchesLocation;
   });
 
   const allTags = ['all', ...Array.from(new Set(allRecipes.flatMap(r => r.tags)))];
@@ -45,6 +49,16 @@ export default function RecipesPage() {
             placeholder="Search recipes by name..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <div className="relative flex-grow">
+          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search by location..."
+            value={locationTerm}
+            onChange={(e) => setLocationTerm(e.target.value)}
             className="pl-10"
           />
         </div>
