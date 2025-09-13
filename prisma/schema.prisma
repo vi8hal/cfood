@@ -11,10 +11,52 @@ datasource db {
 }
 
 model User {
-  id    String @id @default(cuid())
-  email String @unique
-  name  String?
-  password String // This will be a hashed password
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  recipes Recipe[]
+  orders  Order[]
+}
+
+model Recipe {
+  id           Int      @id @default(autoincrement())
+  title        String
+  description  String   @db.Text
+  price        Float
+  location     String
+  contact      String
+  prepTime     Int
+  cookTime     Int
+  servings     Int
+  imageUrl     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  authorId     Int
+  author       User     @relation(fields: [authorId], references: [id])
+  ingredients  Json     @default("[]")
+  instructions Json     @default("[]")
+  tags         Json     @default("[]")
+  nutrition    Json     @default("{}")
+
+  orders Order[]
+
+  @@index([authorId])
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  recipeId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id])
+  recipe Recipe @relation(fields: [recipeId], references: [id])
+
+  @@index([userId])
+  @@index([recipeId])
 }
