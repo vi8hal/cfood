@@ -11,52 +11,29 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   email     String   @unique
-  password  String
+  password  String // In a real app, this should be a hash
   name      String?
+  location  String?
+  recipes   Recipe[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  recipes Recipe[]
-  orders  Order[]
 }
 
 model Recipe {
-  id           Int      @id @default(autoincrement())
+  id           String    @id @default(cuid())
   title        String
-  description  String   @db.Text
+  description  String
   price        Float
-  location     String
-  contact      String
   prepTime     Int
   cookTime     Int
   servings     Int
-  imageUrl     String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  authorId     Int
-  author       User     @relation(fields: [authorId], references: [id])
-  ingredients  Json     @default("[]")
-  instructions Json     @default("[]")
-  tags         Json     @default("[]")
-  nutrition    Json     @default("{}")
-
-  orders Order[]
-
-  @@index([authorId])
-}
-
-model Order {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  recipeId  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id])
-  recipe Recipe @relation(fields: [recipeId], references: [id])
-
-  @@index([userId])
-  @@index([recipeId])
+  ingredients  Json
+  instructions Json
+  tags         String[]
+  author       User      @relation(fields: [authorId], references: [id])
+  authorId     String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
