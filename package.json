@@ -12,9 +12,6 @@
     "typecheck": "tsc --noEmit",
     "postinstall": "prisma generate"
   },
-  "prisma": {
-    "seed": "ts-node --compiler-options '{\\\"module\\\":\\\"CommonJS\\\"}' prisma/seed.ts"
-  },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
     "@genkit-ai/next": "^1.14.1",
