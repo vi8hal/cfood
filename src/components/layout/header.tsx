@@ -149,10 +149,9 @@ export function AppHeader() {
               </Avatar>
             </nav>
           ) : (
-            <Button asChild variant="ghost">
+            <Button asChild variant="ghost" size="icon" aria-label="Login">
               <Link href="/login">
-                <LogIn className="mr-2 h-5 w-5" />
-                Login
+                <LogIn className="h-5 w-5" />
               </Link>
             </Button>
           )}
