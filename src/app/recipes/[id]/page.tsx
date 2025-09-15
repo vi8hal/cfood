@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Mail, MapPin } from 'lucide-react';
 import React from 'react';
-import RecipePrintButton from '@/components/recipe-print-button';
 import {
   Table,
   TableBody,
@@ -19,6 +18,7 @@ import { RecipeMetadata } from '@/components/recipe-metadata';
 import { RecipeDetails } from '@/components/recipe-details';
 import { NutritionFacts } from '@/components/nutrition-facts';
 import placeholderImages from '@/lib/placeholder-images.json';
+import SaveRecipeButton from '@/components/save-recipe-button';
 
 function getRecipe(id: string): Recipe | undefined {
   return recipes.find((recipe) => recipe.id === id);
@@ -126,7 +126,7 @@ export default function RecipePage({ params }: { params: { id: string } }) {
         </div>
 
         <aside className="space-y-8 md:col-span-1">
-          <RecipePrintButton />
+          <SaveRecipeButton />
           <RecipeMetadata recipe={recipe} />
           <Card>
             <CardHeader>
