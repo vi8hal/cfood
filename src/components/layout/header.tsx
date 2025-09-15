@@ -1,13 +1,15 @@
+
 "use client";
 
 import Link from "next/link";
 import {
   Bell,
   ChefHat,
+  LayoutDashboard,
+  LogIn,
   MapPin,
   Menu,
   PlusCircle,
-  Search,
   UtensilsCrossed,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,10 +35,14 @@ const navLinks = [
   { href: "/recipes", label: "Recipes", icon: ChefHat },
   { href: "/map", label: "Food Map", icon: MapPin },
   { href: "/recipes/new", label: "Add Recipe", icon: PlusCircle },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
 export function AppHeader() {
   const pathname = usePathname();
+
+  // A mock auth state. This will be replaced with real authentication logic.
+  const isLoggedIn = false;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
@@ -101,51 +107,37 @@ export function AppHeader() {
         </Sheet>
         {/* End Mobile Nav */}
 
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {/* Can be a global search component */}
-          </div>
-          <nav className="flex items-center">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" aria-label="Notifications">
-                  <Bell className="h-5 w-5" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
+        <div className="flex flex-1 items-center justify-end space-x-4">
+           {isLoggedIn ? (
+            <nav className="flex items-center space-x-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="icon" aria-label="Notifications">
+                    <Bell className="h-5 w-5" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                   <div className="space-y-2">
                     <h4 className="font-medium leading-none">Notifications</h4>
                     <p className="text-sm text-muted-foreground">
-                      Recent updates and sales.
+                      No new notifications.
                     </p>
                   </div>
-                  <Separator />
-                  <div className="grid gap-2">
-                    <div className="flex items-start space-x-4 rounded-md p-2 transition-all hover:bg-accent">
-                      <Avatar className="mt-px h-8 w-8">
-                        <AvatarImage
-                          src={(placeholderImages.recipes as any)['1'].src}
-                          alt={(placeholderImages.recipes as any)['1'].alt}
-                          data-ai-hint={(placeholderImages.recipes as any)['1'].hint}
-                        />
-                        <AvatarFallback>SP</AvatarFallback>
-                      </Avatar>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          Sale Alert!
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Tony&apos;s Pasta Place is now offering Spicy Tomato
-                          Pasta for pickup!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </nav>
+                </PopoverContent>
+              </Popover>
+               <Avatar>
+                <AvatarImage src="https://i.pravatar.cc/150" alt="User avatar" />
+                <AvatarFallback>U</AvatarFallback>
+              </Avatar>
+            </nav>
+          ) : (
+            <Button asChild variant="ghost">
+              <Link href="/login">
+                <LogIn className="mr-2 h-5 w-5" />
+                Login
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
     </header>

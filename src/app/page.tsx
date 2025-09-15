@@ -1,81 +1,93 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
-import { RecipeCard } from '@/components/recipe-card';
-import { recipes } from '@/lib/data';
-import AiRecommendations from '@/components/ai-recommendations';
 import placeholderImages from '@/lib/placeholder-images.json';
+import { ChefHat, Search, Users } from 'lucide-react';
 
-export default function Home() {
-  const featuredRecipes = recipes.slice(0, 6);
+export default function LandingPage() {
   const heroImage = placeholderImages.hero;
 
   return (
-    <div className="flex flex-col">
-      <section className="relative w-full h-[60vh] md:h-[70vh]">
-        <Image
-          src={heroImage.src}
-          alt={heroImage.alt}
-          data-ai-hint={heroImage.hint}
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-center">
-          <div className="bg-background/80 dark:bg-background/60 backdrop-blur-sm p-8 rounded-lg">
-            <h1 className="text-4xl md:text-6xl font-headline font-bold text-primary">
-              Culinary Hub
+    <div className="flex flex-col min-h-screen">
+      <main className="flex-1">
+        <section className="relative w-full h-[70vh] flex items-center justify-center text-center">
+          <Image
+            src={heroImage.src}
+            alt={heroImage.alt}
+            data-ai-hint={heroImage.hint}
+            fill
+            priority
+            className="object-cover"
+          />
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative z-10 max-w-4xl mx-auto px-4">
+            <h1 className="text-4xl md:text-6xl font-headline font-bold text-white">
+              Welcome to <span className="text-primary">Culinary Hub</span>
             </h1>
-            <p className="mt-4 text-lg md:text-xl max-w-2xl text-foreground">
-              Share, discover, and plan your next favorite meal.
+            <p className="mt-4 text-lg md:text-xl text-gray-200">
+              The ultimate platform to discover, share, and enjoy homemade recipes from a vibrant community of food lovers.
             </p>
-            <div className="mt-8 flex w-full max-w-md mx-auto items-center space-x-2">
-              <Input
-                type="text"
-                placeholder="Search for a recipe..."
-                className="flex-1"
-                aria-label="Search for a recipe"
-              />
-              <Button type="submit" size="icon" aria-label="Search">
-                <Search className="h-4 w-4" />
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg">
+                <Link href="/recipes">Explore Recipes</Link>
+              </Button>
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/login">Join the Community</Link>
               </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section id="featured-recipes" className="py-12 md:py-24">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 font-headline">
-            Featured Recipes
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredRecipes.map((recipe) => (
-              <RecipeCard key={recipe.id} recipe={recipe} />
-            ))}
+        <section id="features" className="py-16 md:py-24 bg-background">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12 font-headline">
+              Why Culinary Hub?
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+              <div className="flex flex-col items-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Search className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold font-headline mb-2">Discover & Search</h3>
+                <p className="text-muted-foreground">
+                  Easily find recipes by name, ingredients, or even by location. Your next favorite meal is just a search away.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <ChefHat className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold font-headline mb-2">Share Your Creations</h3>
+                <p className="text-muted-foreground">
+                  Have a recipe to share? Our platform makes it simple to upload and showcase your culinary talents to the world.
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="p-4 bg-primary/10 rounded-full mb-4">
+                  <Users className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold font-headline mb-2">Community Focused</h3>
+                <p className="text-muted-foreground">
+                  Connect with other food enthusiasts, order homemade meals, and be part of a growing community.
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="text-center mt-12">
-            <Button asChild variant="outline">
-              <Link href="/recipes">View All Recipes</Link>
+        </section>
+
+        <section id="cta" className="py-16 md:py-24 bg-secondary/50">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl font-bold mb-4 font-headline">Ready to Get Cooking?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
+              Join Culinary Hub today to start exploring thousands of recipes and share your own creations with a community that shares your passion.
+            </p>
+            <Button asChild size="lg">
+              <Link href="/recipes/new">Add Your First Recipe</Link>
             </Button>
           </div>
-        </div>
-      </section>
-
-      <section id="ai-discovery" className="bg-secondary/50 py-12 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-             <Card>
-              <CardContent className="p-6">
-                <AiRecommendations />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 }
