@@ -10,6 +10,7 @@ import {
   MapPin,
   Menu,
   PlusCircle,
+  Search,
   UtensilsCrossed,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,11 +26,10 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import placeholderImages from "@/lib/placeholder-images.json";
+import { Input } from "../ui/input";
 
 const navLinks = [
   { href: "/recipes", label: "Recipes", icon: ChefHat },
@@ -91,23 +91,41 @@ export function AppHeader() {
                 </Link>
               </SheetTitle>
             </SheetHeader>
-            <div className="flex flex-col space-y-4 mt-8">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent"
-                >
-                  <link.icon className="h-5 w-5" />
-                  <span>{link.label}</span>
-                </Link>
-              ))}
+            <div className="mt-8">
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search..."
+                  className="w-full pl-10"
+                />
+              </div>
+              <div className="flex flex-col space-y-2">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="flex items-center space-x-2 p-2 rounded-md hover:bg-accent"
+                  >
+                    <link.icon className="h-5 w-5" />
+                    <span>{link.label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </SheetContent>
         </Sheet>
         {/* End Mobile Nav */}
 
-        <div className="flex flex-1 items-center justify-end space-x-4">
+        <div className="flex flex-1 items-center justify-between md:justify-end space-x-4">
+          <div className="hidden md:flex flex-1 max-w-sm relative">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+             <Input
+                type="search"
+                placeholder="Search community, recipes, users..."
+                className="w-full pl-10"
+              />
+          </div>
            {isLoggedIn ? (
             <nav className="flex items-center space-x-2">
               <Popover>
