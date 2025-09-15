@@ -5,14 +5,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import type { Recipe } from '@/lib/types';
 import { Clock, DollarSign } from 'lucide-react';
-import placeholderImages from '@/lib/placeholder-images.json';
 
 interface RecipeCardProps {
   recipe: Recipe;
 }
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
-  const recipeImage = (placeholderImages.recipes as any)[recipe.id] || { src: 'https://picsum.photos/seed/1/600/400', alt: 'Placeholder', hint: 'food', width: 600, height: 400 };
+  // Use a consistent placeholder based on recipe ID to avoid layout shifts
+  const recipeImageSeed = parseInt(recipe.id, 16) % 1000;
+  const recipeImage = { 
+    src: `https://picsum.photos/seed/${recipeImageSeed}/600/400`,
+    alt: `Image for ${recipe.title}`,
+    hint: 'food plate',
+    width: 600,
+    height: 400
+  };
 
   return (
     <Link href={`/recipes/${recipe.id}`} className="group">
@@ -21,7 +28,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
           <div className="relative h-48 w-full">
             <Image
               src={recipeImage.src}
-              alt={`Image of ${recipe.title}`}
+              alt={recipeImage.alt}
               data-ai-hint={recipeImage.hint}
               width={recipeImage.width}
               height={recipeImage.height}
@@ -31,7 +38,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         </CardHeader>
         <CardContent className="p-4 flex-grow">
           <div className="flex space-x-2 mb-2">
-            {recipe.tags.slice(0, 2).map((tag) => (
+            {recipe.tags.slice(0, 2).map((tag: string) => (
               <Badge key={tag} variant="secondary" className="font-normal">
                 {tag}
               </Badge>
@@ -44,10 +51,10 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         <CardFooter className="p-4 flex justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center">
             <Avatar className="h-6 w-6 mr-2">
-              <AvatarImage src={recipe.authorImage} alt={recipe.author} />
-              <AvatarFallback>{recipe.author.charAt(0)}</AvatarFallback>
+              <AvatarImage src={recipe.authorImage} alt={recipe.author.name || ''} />
+              <AvatarFallback>{(recipe.author.name || 'U').charAt(0)}</AvatarFallback>
             </Avatar>
-            <span>{recipe.author}</span>
+            <span>{recipe.author.name}</span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center">

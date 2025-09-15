@@ -1,10 +1,10 @@
-import { recipes, dummyOrders } from '@/lib/data';
-import type { Recipe } from '@/lib/types';
+import prisma from '@/lib/prisma';
+import type { Recipe as RecipeType } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, Mail, MapPin } from 'lucide-react';
+import { DollarSign, Mail, MapPin, Phone } from 'lucide-react';
 import React from 'react';
 import {
   Table,
@@ -20,18 +20,55 @@ import { NutritionFacts } from '@/components/nutrition-facts';
 import placeholderImages from '@/lib/placeholder-images.json';
 import SaveRecipeButton from '@/components/save-recipe-button';
 
-function getRecipe(id: string): Recipe | undefined {
-  return recipes.find((recipe) => recipe.id === id);
+async function getRecipe(id: string): Promise<RecipeType | null> {
+  const recipe = await prisma.recipe.findUnique({
+    where: { id },
+    include: {
+      author: true,
+    },
+  });
+
+  if (!recipe) {
+    return null;
+  }
+  
+  // The Prisma query returns a recipe object that needs to be adapted to our RecipeType
+  // We'll parse JSON fields and map the author relation
+  return {
+    ...recipe,
+    id: recipe.id,
+    author: recipe.author.name || 'Unknown Author',
+    authorImage: `https://i.pravatar.cc/150?u=${recipe.author.email}`,
+    ingredients: JSON.parse(recipe.ingredients as string),
+    instructions: JSON.parse(recipe.instructions as string),
+    tags: JSON.parse(recipe.tags as string),
+    // Mocked nutrition and contact for now, can be added to schema later
+    nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
+    contact: recipe.author.email,
+    location: recipe.author.location,
+    phone: '123-456-7890',
+  };
 }
 
-export default function RecipePage({ params }: { params: { id: string } }) {
-  const recipe = getRecipe(params.id);
+export default async function RecipePage({ params }: { params: { id: string } }) {
+  const recipe = await getRecipe(params.id);
 
   if (!recipe) {
     notFound();
   }
   
-  const recipeImage = (placeholderImages.recipes as any)[recipe.id] || { src: 'https://picsum.photos/seed/1/600/400', alt: 'Placeholder', hint: 'food' };
+  // Use a consistent placeholder based on recipe ID to avoid layout shifts
+  const recipeImageSeed = parseInt(recipe.id, 16) % 1000;
+  const recipeImage = { 
+    src: `https://picsum.photos/seed/${recipeImageSeed}/600/400`,
+    alt: `Image for ${recipe.title}`,
+    hint: 'food plate' 
+  };
+  
+  const { dummyOrders } = { dummyOrders: [
+    { id: 'ORD001', user: 'Bob Johnson', timestamp: '2024-05-20 10:30 AM' },
+    { id: 'ORD002', user: 'Charlie Brown', timestamp: '2024-05-20 11:15 AM' },
+  ]};
 
   return (
     <div className="container mx-auto px-4 py-8 print-container">
@@ -139,10 +176,16 @@ export default function RecipePage({ params }: { params: { id: string } }) {
                   <span className='font-medium'>{recipe.location}</span>
                 </div>
               )}
-              {recipe.contact && (
+               {recipe.contact && (
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
                   <a href={`mailto:${recipe.contact}`} className='font-medium hover:underline'>{recipe.contact}</a>
+                </div>
+              )}
+              {recipe.phone && (
+                <div className="flex items-center">
+                  <Phone className="h-4 w-4 mr-2" />
+                  <span className='font-medium'>{recipe.phone}</span>
                 </div>
               )}
             </CardContent>
