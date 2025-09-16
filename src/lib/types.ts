@@ -6,13 +6,13 @@ export type Recipe = {
   ingredients: { item: string; quantity: string }[];
   instructions: string[];
   tags: string[];
-  prep_time: number;
-  cook_time: number;
+  prepTime: number;
+  cookTime: number;
   servings: number;
-  author_id: string;
+  authorId: string;
   price: number;
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
   author: {
     id: string;
     name: string;
