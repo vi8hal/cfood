@@ -37,7 +37,6 @@ const navLinks = [
   { href: "/map", label: "Food Map", icon: MapPin },
   { href: "/recipes/new", label: "Add Recipe", icon: PlusCircle },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/seed", label: "Seed DB", icon: Database },
 ];
 
 export function AppHeader() {
