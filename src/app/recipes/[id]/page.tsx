@@ -95,7 +95,7 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
   }
 }
 
-export default async function RecipePage({ params }: PageProps) {
+export default async function RecipePage({ params }: { params: { id: string } }) {
   const recipe = await getRecipe(params.id);
 
   if (!recipe) {
