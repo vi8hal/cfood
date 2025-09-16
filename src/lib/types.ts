@@ -1,10 +1,25 @@
-import type { Recipe as PrismaRecipe, User } from '@prisma/client';
 
-export type Recipe = Omit<PrismaRecipe, 'authorId' | 'ingredients' | 'instructions' | 'tags'> & {
-  author: User;
+export type Recipe = {
+  id: string;
+  title: string;
+  description: string;
   ingredients: { item: string; quantity: string }[];
   instructions: string[];
   tags: string[];
+  prep_time: number;
+  cook_time: number;
+  servings: number;
+  author_id: string;
+  price: number;
+  created_at: Date;
+  updated_at: Date;
+  author: {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+    location?: string | null;
+  };
   // These fields are not in the current DB schema but are expected by components.
   // We can add them later or keep them as mock data.
   authorImage?: string;
@@ -28,4 +43,12 @@ export type MapLocation = {
     lat: number;
     lng: number;
   };
+};
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string;
+  location?: string;
 };
