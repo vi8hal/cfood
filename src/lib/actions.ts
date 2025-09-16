@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import prisma from './prisma';
+import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
 import { createSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -40,31 +40,26 @@ export async function signUpAction(prevState: any, formData: FormData) {
   const { name, email, password } = validatedFields.data;
 
   try {
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    const existingUserResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    if (existingUserResult.rows.length > 0) {
       return { status: 'error', message: 'User with this email already exists' };
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
+    const userResult = await pool.query(
+        'INSERT INTO "User" (name, email, password) VALUES ($1, $2, $3) RETURNING id',
+        [name, email, hashedPassword]
+      );
+    const user = userResult.rows[0];
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await prisma.oTP.create({
-      data: {
-        userId: user.id,
-        code: otpCode,
-        expiresAt: otpExpires,
-      },
-    });
+    await pool.query(
+        'INSERT INTO "OTP" ("userId", code, "expiresAt") VALUES ($1, $2, $3)',
+        [user.id, otpCode, otpExpires]
+    );
 
     await sendVerificationEmail(email, otpCode);
 
@@ -105,33 +100,25 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
   const { email, otp } = validatedFields.data;
   
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
+    const userResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    if (userResult.rows.length === 0) {
       return { status: 'error', message: 'User not found.' };
     }
+    const user = userResult.rows[0];
 
-    const otpRecord = await prisma.oTP.findFirst({
-        where: {
-            userId: user.id,
-            code: otp,
-            expiresAt: {
-                gt: new Date(),
-            }
-        }
-    });
+    const otpResult = await pool.query(
+        'SELECT * FROM "OTP" WHERE "userId" = $1 AND code = $2 AND "expiresAt" > NOW()',
+        [user.id, otp]
+    );
 
-    if (!otpRecord) {
+    if (otpResult.rows.length === 0) {
         return { status: 'error', message: 'Invalid or expired OTP.' };
     }
+    const otpRecord = otpResult.rows[0];
 
-    await prisma.user.update({
-        where: { id: user.id },
-        data: { emailVerified: new Date() }
-    });
+    await pool.query('UPDATE "User" SET "emailVerified" = NOW() WHERE id = $1', [user.id]);
 
-    await prisma.oTP.delete({
-        where: { id: otpRecord.id }
-    });
+    await pool.query('DELETE FROM "OTP" WHERE id = $1', [otpRecord.id]);
     
     await createSession(user.id);
     
@@ -170,12 +157,13 @@ export async function signInAction(prevState: any, formData: FormData) {
   const { email, password } = validatedFields.data;
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const userResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
 
-    if (!user) {
+    if (userResult.rows.length === 0) {
       return { status: 'error', message: 'Invalid email or password.' };
     }
 
+    const user = userResult.rows[0];
     const passwordsMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordsMatch) {
