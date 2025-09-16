@@ -16,33 +16,38 @@ import {
 import { RecipeMetadata } from '@/components/recipe-metadata';
 import { RecipeDetails } from '@/components/recipe-details';
 import { NutritionFacts } from '@/components/nutrition-facts';
-import placeholderImages from '@/lib/placeholder-images.json';
 import SaveRecipeButton from '@/components/save-recipe-button';
 
 async function getRecipe(id: string): Promise<RecipeType | null> {
-  // This is a mock implementation.
-  // In a real application, you would fetch this from a database.
-  const response = await fetch('http://localhost:9002/api/recipes');
-  if (!response.ok) {
-    return null;
-  }
-  const { recipes } = await response.json();
-  const recipe = recipes.find((r: RecipeType) => r.id === id);
+  try {
+    // In a real application, you would fetch this from a database.
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/recipes`);
+    if (!response.ok) {
+      // Log the error and return null, or throw an error
+      console.error(`Failed to fetch recipes: ${response.statusText}`);
+      return null;
+    }
+    const { recipes } = await response.json();
+    const recipe = recipes.find((r: RecipeType) => r.id === id);
 
-  if (!recipe) {
+    if (!recipe) {
+      return null;
+    }
+    
+    // The API route provides a parsed recipe object.
+    // We can add mock data for fields not yet in the schema.
+    return {
+      ...recipe,
+      // Mocked nutrition and contact for now, can be added to schema later
+      nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
+      contact: recipe.author.email,
+      location: recipe.author.location,
+      phone: '123-456-7890',
+    };
+  } catch (error) {
+    console.error("An error occurred while fetching the recipe:", error);
     return null;
   }
-  
-  // The API route provides a parsed recipe object.
-  // We can add mock data for fields not yet in the schema.
-  return {
-    ...recipe,
-    // Mocked nutrition and contact for now, can be added to schema later
-    nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
-    contact: recipe.author.email,
-    location: recipe.author.location,
-    phone: '123-456-7890',
-  };
 }
 
 export default async function RecipePage({ params }: { params: { id: string } }) {
