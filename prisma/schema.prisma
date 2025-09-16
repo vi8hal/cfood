@@ -1,40 +1,51 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_URL")
+  directUrl = env("POSTGRES_URL")
+}
 
 generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  location  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  recipes   Recipe[]
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  password      String
+  emailVerified DateTime?
+  image         String?
+  location      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  recipes       Recipe[]
+  otps          OTP[]
 }
 
 model Recipe {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  price       Float
-  prepTime    Int
-  cookTime    Int
-  servings    Int
-  ingredients Json
+  id           String    @id @default(cuid())
+  title        String
+  description  String    @db.Text
+  ingredients  Json
   instructions Json
-  tags        Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    String
+  tags         Json
+  prepTime     Int       @map("prep_time")
+  cookTime     Int       @map("cook_time")
+  servings     Int
+  price        Decimal   @db.Decimal(10, 2)
+  author       User      @relation(fields: [authorId], references: [id])
+  authorId     String    @map("author_id")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@map("recipes")
+}
+
+model OTP {
+  id        String   @id @default(cuid())
+  code      String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
 }

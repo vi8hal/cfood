@@ -1,166 +1,211 @@
-
 'use server';
 
-import {getPersonalizedRecipeRecommendations} from '@/ai/flows/personalized-recipe-recommendations';
-import {z} from 'zod';
-import {pool} from '@/lib/db';
-import {users, recipes} from '@/lib/placeholder-data';
+import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import prisma from './prisma';
+import { sendVerificationEmail } from '@/lib/email';
+import { createSession } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 
-const recommendationSchema = z.object({
-  dietaryPreferences: z.string().optional(),
-  availableIngredients: z.string(),
-});
-
-export async function getRecommendations(prevState: any, formData: FormData) {
-  const validatedFields = recommendationSchema.safeParse({
-    dietaryPreferences: formData.get('dietaryPreferences'),
-    availableIngredients: formData.get('availableIngredients'),
+const SignUpSchema = z
+  .object({
+    name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+    email: z.string().email({ message: 'Please enter a valid email' }),
+    password: z
+      .string()
+      .min(8, { message: 'Password must be at least 8 characters' }),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
   });
+
+export async function signUpAction(prevState: any, formData: FormData) {
+  const validatedFields = SignUpSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
 
   if (!validatedFields.success) {
     return {
-      message: 'Invalid form data.',
-      recommendations: [],
+      status: 'error',
+      message: 'Invalid form data',
+      errors: validatedFields.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
     };
   }
 
-  const {dietaryPreferences, availableIngredients} = validatedFields.data;
+  const { name, email, password } = validatedFields.data;
 
   try {
-    const result = await getPersonalizedRecipeRecommendations({
-      dietaryPreferences: dietaryPreferences
-        ? dietaryPreferences.split(',').map(s => s.trim())
-        : [],
-      availableIngredients: availableIngredients
-        .split(',')
-        .map(s => s.trim()),
-      pastInteractions: ['liked Spicy Tomato Pasta'], // Mocked data
-      location: 'San Francisco, CA', // Mocked data
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return { status: 'error', message: 'User with this email already exists' };
+    }
+    
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+      },
     });
 
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await prisma.oTP.create({
+      data: {
+        userId: user.id,
+        code: otpCode,
+        expiresAt: otpExpires,
+      },
+    });
+
+    await sendVerificationEmail(email, otpCode);
+
     return {
-      message: 'Recommendations generated!',
-      recommendations: result.recommendedRecipes,
+      status: 'success',
+      message: `A verification code has been sent to ${email}.`,
     };
   } catch (error) {
-    console.error(error);
+    console.error('Sign-up failed:', error);
     return {
-      message: 'Failed to generate recommendations.',
-      recommendations: [],
+      status: 'error',
+      message: 'An unexpected error occurred during sign-up.',
     };
   }
 }
 
-export async function seedDatabase() {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+const VerifyOtpSchema = z.object({
+    email: z.string().email(),
+    otp: z.string().length(6, { message: "OTP must be 6 digits" }),
+});
 
-    console.log('Seeding database...');
+export async function verifyOtpAction(prevState: any, formData: FormData) {
+  const validatedFields = VerifyOtpSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
 
-    // Drop tables if they exist
-    await client.query('DROP TABLE IF EXISTS recipes CASCADE');
-    await client.query('DROP TABLE IF EXISTS users CASCADE');
-    console.log('Dropped existing tables.');
-
-    // Create users table
-    await client.query(`
-      CREATE TABLE users (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        image VARCHAR(255),
-        location VARCHAR(255),
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('Created "users" table.');
-
-    // Create recipes table
-    await client.query(`
-      CREATE TABLE recipes (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        title VARCHAR(255) NOT NULL,
-        description TEXT NOT NULL,
-        ingredients JSON NOT NULL,
-        instructions JSON NOT NULL,
-        tags JSON NOT NULL,
-        prep_time INTEGER NOT NULL,
-        cook_time INTEGER NOT NULL,
-        servings INTEGER NOT NULL,
-        author_id UUID NOT NULL REFERENCES users(id),
-        price DECIMAL(10, 2) NOT NULL,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log('Created "recipes" table.');
-
-    // Insert users
-    const insertedUsers = [];
-    for (const user of users) {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      const res = await client.query(
-        `
-        INSERT INTO users (name, email, password, image, location)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, name;
-      `,
-        [user.name, user.email, hashedPassword, user.image, user.location]
-      );
-      insertedUsers.push(res.rows[0]);
-    }
-    console.log(`Seeded ${insertedUsers.length} users.`);
-
-    // Insert recipes
-    for (const recipe of recipes) {
-      // Find the corresponding author's ID from the inserted users
-      const author = insertedUsers.find(u => u.name === recipe.authorName);
-      if (!author) {
-        console.warn(
-          `Could not find author "${recipe.authorName}" for recipe "${recipe.title}". Skipping.`
-        );
-        continue;
-      }
-
-      await client.query(
-        `
-        INSERT INTO recipes (title, description, ingredients, instructions, tags, prep_time, cook_time, servings, author_id, price)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-      `,
-        [
-          recipe.title,
-          recipe.description,
-          JSON.stringify(recipe.ingredients),
-          JSON.stringify(recipe.instructions),
-          JSON.stringify(recipe.tags),
-          recipe.prepTime,
-          recipe.cookTime,
-          recipe.servings,
-          author.id,
-          recipe.price,
-        ]
-      );
-    }
-    console.log(`Seeded ${recipes.length} recipes.`);
-
-    await client.query('COMMIT');
+  if (!validatedFields.success) {
     return {
-      message:
-        'Database seeding completed successfully. Tables created and populated.',
-      error: null,
+      status: 'error',
+      message: 'Invalid OTP data',
+      errors: validatedFields.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
     };
-  } catch (error: any) {
-    await client.query('ROLLBACK');
-    console.error('Database seeding failed:', error);
-    return {
-      message: 'Database seeding failed.',
-      error: error.message || 'An unknown error occurred.',
-    };
-  } finally {
-    client.release();
   }
+  
+  const { email, otp } = validatedFields.data;
+  
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return { status: 'error', message: 'User not found.' };
+    }
+
+    const otpRecord = await prisma.oTP.findFirst({
+        where: {
+            userId: user.id,
+            code: otp,
+            expiresAt: {
+                gt: new Date(),
+            }
+        }
+    });
+
+    if (!otpRecord) {
+        return { status: 'error', message: 'Invalid or expired OTP.' };
+    }
+
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { emailVerified: new Date() }
+    });
+
+    await prisma.oTP.delete({
+        where: { id: otpRecord.id }
+    });
+    
+    await createSession(user.id);
+    
+  } catch (error) {
+    console.error('OTP verification failed:', error);
+    return {
+      status: 'error',
+      message: 'An unexpected error occurred during OTP verification.',
+    };
+  }
+  redirect('/dashboard');
+}
+
+const SignInSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email.' }),
+  password: z.string().min(1, { message: 'Password is required.' }),
+});
+
+
+export async function signInAction(prevState: any, formData: FormData) {
+  const validatedFields = SignInSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
+
+  if (!validatedFields.success) {
+    return {
+      status: 'error',
+      message: 'Invalid form data',
+      errors: validatedFields.error.issues.map((issue) => ({
+        path: issue.path.join('.'),
+        message: issue.message,
+      })),
+    };
+  }
+
+  const { email, password } = validatedFields.data;
+
+  try {
+    const user = await prisma.user.findUnique({ where: { email } });
+
+    if (!user) {
+      return { status: 'error', message: 'Invalid email or password.' };
+    }
+
+    const passwordsMatch = await bcrypt.compare(password, user.password);
+
+    if (!passwordsMatch) {
+      return { status: 'error', message: 'Invalid email or password.' };
+    }
+    
+    if (!user.emailVerified) {
+        return {
+            status: 'error',
+            message: 'Email not verified. Please check your inbox for the verification code.',
+        };
+    }
+
+    await createSession(user.id);
+
+  } catch (error) {
+    console.error('Sign-in error:', error);
+    return {
+      status: 'error',
+      message: 'An unexpected error occurred. Please try again.',
+    };
+  }
+
+  redirect('/dashboard');
+}
+
+
+export async function signOutAction() {
+    // This action would clear the session cookie
+    // Implementation depends on the auth library used
+    // For now, we'll simulate by redirecting
+    redirect('/login');
 }

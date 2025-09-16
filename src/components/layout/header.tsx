@@ -1,49 +1,58 @@
 
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 import {
   Bell,
   ChefHat,
   LayoutDashboard,
   LogIn,
+  LogOut,
   MapPin,
   Menu,
   PlusCircle,
   Search,
   UtensilsCrossed,
-  Database,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from '@/components/ui/sheet';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
-import { Input } from "../ui/input";
+} from '@/components/ui/popover';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { Input } from '../ui/input';
+import { useEffect, useState } from 'react';
+import { getSession } from '@/lib/session';
+import { signOutAction } from '@/lib/actions';
 
 const navLinks = [
-  { href: "/recipes", label: "Recipes", icon: ChefHat },
-  { href: "/map", label: "Food Map", icon: MapPin },
-  { href: "/recipes/new", label: "Add Recipe", icon: PlusCircle },
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: '/recipes', label: 'Recipes', icon: ChefHat },
+  { href: '/map', label: 'Food Map', icon: MapPin },
+  { href: '/recipes/new', label: 'Add Recipe', icon: PlusCircle },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
 export function AppHeader() {
   const pathname = usePathname();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // A mock auth state. This will be replaced with real authentication logic.
-  const isLoggedIn = false;
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+      setIsLoggedIn(!!session);
+    };
+    checkSession();
+  }, [pathname]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
@@ -61,8 +70,8 @@ export function AppHeader() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "transition-colors hover:text-primary",
-                  pathname === link.href ? "text-primary" : "text-foreground/60"
+                  'transition-colors hover:text-primary',
+                  pathname === link.href ? 'text-primary' : 'text-foreground/60'
                 )}
               >
                 {link.label}
@@ -120,23 +129,27 @@ export function AppHeader() {
 
         <div className="flex flex-1 items-center justify-between md:justify-end space-x-4">
           <div className="hidden md:flex flex-1 max-w-sm relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-             <Input
-                type="search"
-                placeholder="Search community, recipes, users..."
-                className="w-full pl-10"
-              />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search community, recipes, users..."
+              className="w-full pl-10"
+            />
           </div>
-           {isLoggedIn ? (
+          {isLoggedIn ? (
             <nav className="flex items-center space-x-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="ghost" size="icon" aria-label="Notifications">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Notifications"
+                  >
                     <Bell className="h-5 w-5" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-80">
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <h4 className="font-medium leading-none">Notifications</h4>
                     <p className="text-sm text-muted-foreground">
                       No new notifications.
@@ -144,10 +157,15 @@ export function AppHeader() {
                   </div>
                 </PopoverContent>
               </Popover>
-               <Avatar>
+              <Avatar>
                 <AvatarImage src="https://i.pravatar.cc/150" alt="User avatar" />
                 <AvatarFallback>U</AvatarFallback>
               </Avatar>
+              <form action={signOutAction}>
+                <Button variant="ghost" size="icon" aria-label="Sign Out" type="submit">
+                  <LogOut className="h-5 w-5" />
+                </Button>
+              </form>
             </nav>
           ) : (
             <Button asChild variant="ghost" size="icon" aria-label="Login">
