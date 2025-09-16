@@ -1,4 +1,3 @@
-import prisma from '@/lib/prisma';
 import type { Recipe as RecipeType } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -21,27 +20,23 @@ import placeholderImages from '@/lib/placeholder-images.json';
 import SaveRecipeButton from '@/components/save-recipe-button';
 
 async function getRecipe(id: string): Promise<RecipeType | null> {
-  const recipe = await prisma.recipe.findUnique({
-    where: { id },
-    include: {
-      author: true,
-    },
-  });
+  // This is a mock implementation.
+  // In a real application, you would fetch this from a database.
+  const response = await fetch('http://localhost:9002/api/recipes');
+  if (!response.ok) {
+    return null;
+  }
+  const { recipes } = await response.json();
+  const recipe = recipes.find((r: RecipeType) => r.id === id);
 
   if (!recipe) {
     return null;
   }
   
-  // The Prisma query returns a recipe object that needs to be adapted to our RecipeType
-  // We'll parse JSON fields and map the author relation
+  // The API route provides a parsed recipe object.
+  // We can add mock data for fields not yet in the schema.
   return {
     ...recipe,
-    id: recipe.id,
-    author: recipe.author.name || 'Unknown Author',
-    authorImage: `https://i.pravatar.cc/150?u=${recipe.author.email}`,
-    ingredients: JSON.parse(recipe.ingredients as string),
-    instructions: JSON.parse(recipe.instructions as string),
-    tags: JSON.parse(recipe.tags as string),
     // Mocked nutrition and contact for now, can be added to schema later
     nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
     contact: recipe.author.email,
@@ -77,10 +72,10 @@ export default async function RecipePage({ params }: { params: { id: string } })
         <div className="flex items-center justify-between">
           <div className="flex items-center text-muted-foreground">
             <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={recipe.authorImage} alt={recipe.author} />
-              <AvatarFallback>{recipe.author.charAt(0)}</AvatarFallback>
+              <AvatarImage src={recipe.authorImage} alt={recipe.author.name} />
+              <AvatarFallback>{(recipe.author.name || 'A').charAt(0)}</AvatarFallback>
             </Avatar>
-            <span>By {recipe.author}</span>
+            <span>By {recipe.author.name}</span>
           </div>
           <div className="flex items-center text-2xl font-bold text-primary">
             <DollarSign className="h-6 w-6 mr-1" />
