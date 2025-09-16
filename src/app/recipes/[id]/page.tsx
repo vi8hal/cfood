@@ -1,3 +1,4 @@
+
 import type { Recipe as RecipeType } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -17,40 +18,84 @@ import { RecipeMetadata } from '@/components/recipe-metadata';
 import { RecipeDetails } from '@/components/recipe-details';
 import { NutritionFacts } from '@/components/nutrition-facts';
 import SaveRecipeButton from '@/components/save-recipe-button';
+import { pool } from '@/lib/db';
+
+type PageProps = {
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+};
 
 async function getRecipe(id: string): Promise<RecipeType | null> {
   try {
-    // In a real application, you would fetch this from a database.
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/recipes`);
-    if (!response.ok) {
-      // Log the error and return null, or throw an error
-      console.error(`Failed to fetch recipes: ${response.statusText}`);
-      return null;
-    }
-    const { recipes } = await response.json();
-    const recipe = recipes.find((r: RecipeType) => r.id === id);
+    const result = await pool.query(
+      `SELECT
+        r.id,
+        r.title,
+        r.description,
+        r.ingredients,
+        r.instructions,
+        r.tags,
+        r."prepTime",
+        r."cookTime",
+        r.servings,
+        r.price,
+        r."createdAt",
+        r."updatedAt",
+        u.id as "authorId",
+        u.name as "authorName",
+        u.email as "authorEmail",
+        u.image as "authorImage",
+        u.location as "authorLocation"
+      FROM "Recipe" r
+      JOIN "User" u ON r."authorId" = u.id
+      WHERE r.id = $1`,
+      [id]
+    );
 
-    if (!recipe) {
+    if (result.rows.length === 0) {
       return null;
     }
-    
-    // The API route provides a parsed recipe object.
-    // We can add mock data for fields not yet in the schema.
-    return {
-      ...recipe,
-      // Mocked nutrition and contact for now, can be added to schema later
-      nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
-      contact: recipe.author.email,
-      location: recipe.author.location,
-      phone: '123-456-7890',
+
+    const dbRecipe = result.rows[0];
+
+    // The query returns snake_case columns, so we map them to camelCase
+    const recipe: RecipeType = {
+        id: dbRecipe.id,
+        title: dbRecipe.title,
+        description: dbRecipe.description,
+        ingredients: dbRecipe.ingredients,
+        instructions: dbRecipe.instructions,
+        tags: dbRecipe.tags,
+        prepTime: dbRecipe.prepTime,
+        cookTime: dbRecipe.cookTime,
+        servings: dbRecipe.servings,
+        price: parseFloat(dbRecipe.price),
+        createdAt: dbRecipe.createdAt,
+        updatedAt: dbRecipe.updatedAt,
+        authorId: dbRecipe.authorId,
+        author: {
+            id: dbRecipe.authorId,
+            name: dbRecipe.authorName,
+            email: dbRecipe.authorEmail,
+            image: dbRecipe.authorImage,
+            location: dbRecipe.authorLocation,
+        },
+        authorImage: dbRecipe.authorImage,
+        // Mocked data for fields not in DB
+        nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
+        contact: dbRecipe.authorEmail,
+        location: dbRecipe.authorLocation,
+        phone: '123-456-7890',
     };
+
+    return recipe;
   } catch (error) {
     console.error("An error occurred while fetching the recipe:", error);
     return null;
   }
 }
 
-export default async function RecipePage({ params }: { params: { id: string } }) {
+export default async function RecipePage({ params }: PageProps) {
   const recipe = await getRecipe(params.id);
 
   if (!recipe) {
