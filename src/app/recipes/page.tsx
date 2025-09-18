@@ -8,12 +8,12 @@ async function getRecipes(): Promise<Recipe[]> {
     const result = await pool.query(`
       SELECT
         r.id, r.title, r.description, r.ingredients, r.instructions, r.tags,
-        r."prepTime", r."cookTime", r.servings, r.price, r.createdAt, r.updatedAt,
+        r."prepTime", r."cookTime", r.servings, r.price, r.createdat, r.updatedat,
         u.id as "authorId", u.name as "authorName", u.email as "authorEmail",
         u.image as "authorImage", u.location as "authorLocation"
       FROM "Recipe" r
       JOIN "User" u ON r."authorId" = u.id
-      ORDER BY r.createdAt DESC
+      ORDER BY r.createdat DESC
     `);
 
     return result.rows.map((dbRecipe) => ({
@@ -48,6 +48,8 @@ async function getRecipes(): Promise<Recipe[]> {
 
 export default async function RecipesPage() {
   const recipes = await getRecipes();
+  const allTags = ['all', ...Array.from(new Set(recipes.flatMap(r => r.tags as string[])))];
+
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -58,7 +60,8 @@ export default async function RecipesPage() {
         </p>
       </div>
 
-      <RecipesClient initialRecipes={recipes} />
+      <RecipesClient initialRecipes={recipes} allTags={allTags} />
     </div>
   );
 }
+

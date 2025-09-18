@@ -17,9 +17,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface RecipesClientProps {
   initialRecipes: Recipe[];
+  allTags: string[];
 }
 
-export function RecipesClient({ initialRecipes }: RecipesClientProps) {
+export function RecipesClient({ initialRecipes, allTags }: RecipesClientProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [locationTerm, setLocationTerm] = useState('');
   const [tagFilter, setTagFilter] = useState('all');
@@ -35,8 +36,6 @@ export function RecipesClient({ initialRecipes }: RecipesClientProps) {
       tagFilter === 'all' || (recipe.tags as string[]).includes(tagFilter);
     return matchesSearch && matchesTag && matchesLocation;
   });
-
-  const allTags = ['all', ...Array.from(new Set(initialRecipes.flatMap(r => r.tags as string[])))];
 
   return (
     <>
