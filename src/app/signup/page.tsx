@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -54,12 +54,12 @@ export default function SignupPage() {
   const [emailForOtp, setEmailForOtp] = useState('');
   const { toast } = useToast();
 
-  const [signUpState, signUpFormAction] = useFormState<FormState, FormData>(
+  const [signUpState, signUpFormAction] = useActionState<FormState, FormData>(
     signUpAction,
     null
   );
 
-  const [verifyOtpState, verifyOtpFormAction] = useFormState<
+  const [verifyOtpState, verifyOtpFormAction] = useActionState<
     FormState,
     FormData
   >(verifyOtpAction, null);
