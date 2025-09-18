@@ -30,10 +30,7 @@ export async function signUpAction(prevState: any, formData: FormData) {
     return {
       status: 'error',
       message: 'Invalid form data',
-      errors: validatedFields.error.issues.map((issue) => ({
-        path: issue.path.join('.'),
-        message: issue.message,
-      })),
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
@@ -90,10 +87,7 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
     return {
       status: 'error',
       message: 'Invalid OTP data',
-      errors: validatedFields.error.issues.map((issue) => ({
-        path: issue.path.join('.'),
-        message: issue.message,
-      })),
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
   
@@ -122,6 +116,7 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
     
     await createSession(user.id);
     
+    return { status: 'success', message: 'Verification successful! Redirecting...' };
   } catch (error) {
     console.error('OTP verification failed:', error);
     return {
@@ -129,7 +124,6 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
       message: 'An unexpected error occurred during OTP verification.',
     };
   }
-  redirect('/dashboard');
 }
 
 const SignInSchema = z.object({
@@ -147,10 +141,7 @@ export async function signInAction(prevState: any, formData: FormData) {
     return {
       status: 'error',
       message: 'Invalid form data',
-      errors: validatedFields.error.issues.map((issue) => ({
-        path: issue.path.join('.'),
-        message: issue.message,
-      })),
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
@@ -187,7 +178,7 @@ export async function signInAction(prevState: any, formData: FormData) {
     };
   }
 
-  redirect('/dashboard');
+  return { status: 'success', message: 'Sign-in successful! Redirecting...' };
 }
 
 

@@ -1,9 +1,9 @@
-
 'use client';
 
 import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { signUpAction, verifyOtpAction } from '@/lib/actions';
@@ -53,6 +53,7 @@ export default function SignupPage() {
   const [showOtpForm, setShowOtpForm] = useState(false);
   const [emailForOtp, setEmailForOtp] = useState('');
   const { toast } = useToast();
+  const router = useRouter();
 
   const [signUpState, signUpFormAction] = useActionState<FormState, FormData>(
     signUpAction,
@@ -66,14 +67,13 @@ export default function SignupPage() {
 
   const {
     register,
-    watch,
-    formState: { errors },
+    handleSubmit,
+    formState: { errors: formErrors },
+    getValues,
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
-    mode: 'onBlur', // Validate on blur
+    mode: 'onBlur',
   });
-
-  const formData = watch();
 
   useEffect(() => {
     if (signUpState?.status === 'success') {
@@ -81,7 +81,7 @@ export default function SignupPage() {
         title: 'Registration Successful',
         description: signUpState.message,
       });
-      setEmailForOtp(formData.email);
+      setEmailForOtp(getValues('email'));
       setShowOtpForm(true);
     } else if (signUpState?.status === 'error') {
       toast({
@@ -89,20 +89,24 @@ export default function SignupPage() {
         title: 'Registration Failed',
         description: signUpState.message,
       });
-      // Here you could parse signUpState.errors to set form errors
     }
-  }, [signUpState, toast, formData.email]);
-
+  }, [signUpState, toast, getValues]);
 
   useEffect(() => {
-    if (verifyOtpState?.status === 'error') {
-        toast({
-            variant: 'destructive',
-            title: 'Verification Failed',
-            description: verifyOtpState.message,
-        });
+    if (verifyOtpState?.status === 'success') {
+      toast({
+        title: 'Verification Successful',
+        description: verifyOtpState.message,
+      });
+      router.push('/dashboard');
+    } else if (verifyOtpState?.status === 'error') {
+      toast({
+        variant: 'destructive',
+        title: 'Verification Failed',
+        description: verifyOtpState.message,
+      });
     }
-  }, [verifyOtpState, toast]);
+  }, [verifyOtpState, toast, router]);
 
   if (showOtpForm) {
     return (
@@ -160,12 +164,10 @@ export default function SignupPage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                type="text"
-                placeholder="John Doe"
                 {...register('name')}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+              {formErrors.name && (
+                <p className="text-sm text-destructive">{formErrors.name.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -173,12 +175,11 @@ export default function SignupPage() {
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
                 {...register('email')}
               />
-              {errors.email && (
+              {formErrors.email && (
                 <p className="text-sm text-destructive">
-                  {errors.email.message}
+                  {formErrors.email.message}
                 </p>
               )}
             </div>
@@ -189,9 +190,9 @@ export default function SignupPage() {
                 type="password"
                 {...register('password')}
               />
-              {errors.password && (
+              {formErrors.password && (
                 <p className="text-sm text-destructive">
-                  {errors.password.message}
+                  {formErrors.password.message}
                 </p>
               )}
             </div>
@@ -202,9 +203,9 @@ export default function SignupPage() {
                 type="password"
                 {...register('confirmPassword')}
               />
-               {errors.confirmPassword && (
+               {formErrors.confirmPassword && (
                 <p className="text-sm text-destructive">
-                  {errors.confirmPassword.message}
+                  {formErrors.confirmPassword.message}
                 </p>
               )}
             </div>

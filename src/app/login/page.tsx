@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { signInAction } from '@/lib/actions';
 import { FormState } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,7 @@ export default function LoginPage() {
     null
   );
   const { toast } = useToast();
+  const router = useRouter();
 
   useEffect(() => {
     if (state?.status === 'error') {
@@ -45,7 +46,14 @@ export default function LoginPage() {
         description: state.message,
       });
     }
-  }, [state, toast]);
+    if (state?.status === 'success') {
+      toast({
+        title: 'Sign-In Successful',
+        description: state.message,
+      });
+      router.push('/dashboard');
+    }
+  }, [state, toast, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
