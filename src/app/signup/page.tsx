@@ -71,6 +71,15 @@ export default function SignupPage() {
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
   });
+  
+  const onSubmit = (data: SignUpFormValues) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
+    });
+    signUpFormAction(formData);
+  };
+
 
   useEffect(() => {
     if (signUpState?.status === 'success') {
@@ -144,7 +153,7 @@ export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="w-full max-w-md">
-        <form action={signUpFormAction}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <UtensilsCrossed className="h-10 w-10 text-primary" />
@@ -161,25 +170,25 @@ export default function SignupPage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
-                name="name"
                 type="text"
                 placeholder="John Doe"
+                {...register('name')}
               />
-              {signUpState?.errors?.find(e => e.path === 'name')?.message && (
-                <p className="text-sm text-destructive">{signUpState.errors.find(e => e.path === 'name')?.message}</p>
+              {errors.name && (
+                <p className="text-sm text-destructive">{errors.name.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                name="email"
                 type="email"
                 placeholder="m@example.com"
+                {...register('email')}
               />
-              {signUpState?.errors?.find(e => e.path === 'email')?.message && (
+              {errors.email && (
                 <p className="text-sm text-destructive">
-                  {signUpState.errors.find(e => e.path === 'email')?.message}
+                  {errors.email.message}
                 </p>
               )}
             </div>
@@ -187,12 +196,12 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
-                name="password"
                 type="password"
+                {...register('password')}
               />
-              {signUpState?.errors?.find(e => e.path === 'password')?.message && (
+              {errors.password && (
                 <p className="text-sm text-destructive">
-                  {signUpState.errors.find(e => e.path === 'password')?.message}
+                  {errors.password.message}
                 </p>
               )}
             </div>
@@ -200,12 +209,12 @@ export default function SignupPage() {
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
-                name="confirmPassword"
                 type="password"
+                {...register('confirmPassword')}
               />
-               {signUpState?.errors?.find(e => e.path === 'confirmPassword')?.message && (
+               {errors.confirmPassword && (
                 <p className="text-sm text-destructive">
-                  {signUpState.errors.find(e => e.path === 'confirmPassword')?.message}
+                  {errors.confirmPassword.message}
                 </p>
               )}
             </div>
