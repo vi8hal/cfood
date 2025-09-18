@@ -6,22 +6,23 @@ import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
 import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import type { FormState } from './types';
 
 const SignUpSchema = z
   .object({
-    name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-    email: z.string().email({ message: 'Please enter a valid email' }),
+    name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
+    email: z.string().email({ message: 'Please enter a valid email.' }),
     password: z
       .string()
-      .min(8, { message: 'Password must be at least 8 characters' }),
+      .min(8, { message: 'Password must be at least 8 characters.' }),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
+    message: "Passwords don't match.",
     path: ['confirmPassword'],
   });
 
-export async function signUpAction(prevState: any, formData: FormData) {
+export async function signUpAction(prevState: any, formData: FormData): Promise<FormState> {
   const validatedFields = SignUpSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -29,8 +30,8 @@ export async function signUpAction(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       status: 'error',
-      message: 'Invalid form data',
-      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Invalid form data. Please check the fields and try again.',
+      fieldErrors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
@@ -39,7 +40,11 @@ export async function signUpAction(prevState: any, formData: FormData) {
   try {
     const existingUserResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
     if (existingUserResult.rows.length > 0) {
-      return { status: 'error', message: 'User with this email already exists' };
+      return { 
+        status: 'error', 
+        message: 'User with this email already exists.',
+        fieldErrors: { email: ['A user with this email already exists.'] }
+      };
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -60,25 +65,23 @@ export async function signUpAction(prevState: any, formData: FormData) {
 
     await sendVerificationEmail(email, otpCode);
 
-    return {
-      status: 'success',
-      message: `A verification code has been sent to ${email}.`,
-    };
   } catch (error) {
-    console.error('Sign-up failed:', error);
+    console.error(`Sign-up failed for ${email}:`, error);
     return {
       status: 'error',
-      message: 'An unexpected error occurred during sign-up.',
+      message: 'An unexpected error occurred on the server.',
     };
   }
+
+  redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
 }
 
 const VerifyOtpSchema = z.object({
     email: z.string().email(),
-    otp: z.string().length(6, { message: "OTP must be 6 digits" }),
+    otp: z.string().length(6, { message: "Your OTP must be 6 digits." }),
 });
 
-export async function verifyOtpAction(prevState: any, formData: FormData) {
+export async function verifyOtpAction(prevState: any, formData: FormData): Promise<FormState> {
   const validatedFields = VerifyOtpSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -86,8 +89,8 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       status: 'error',
-      message: 'Invalid OTP data',
-      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Invalid OTP data.',
+      fieldErrors: validatedFields.error.flatten().fieldErrors,
     };
   }
   
@@ -106,7 +109,11 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
     );
 
     if (otpResult.rows.length === 0) {
-        return { status: 'error', message: 'Invalid or expired OTP.' };
+        return { 
+          status: 'error', 
+          message: 'Invalid or expired OTP.',
+          fieldErrors: { otp: ['Invalid or expired OTP. Please try again.'] }
+        };
     }
     const otpRecord = otpResult.rows[0];
 
@@ -117,14 +124,18 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
     await createSession(user.id);
     
   } catch (error) {
-    console.error('OTP verification failed:', error);
+    console.error(`OTP verification failed for ${email}:`, error);
     return {
       status: 'error',
       message: 'An unexpected error occurred during OTP verification.',
     };
   }
   
-  redirect('/dashboard');
+  // A redirect will be handled by the client-side component after showing a success toast.
+  return {
+    status: 'success',
+    message: 'Your account has been successfully verified!',
+  };
 }
 
 const SignInSchema = z.object({
@@ -133,7 +144,7 @@ const SignInSchema = z.object({
 });
 
 
-export async function signInAction(prevState: any, formData: FormData) {
+export async function signInAction(prevState: any, formData: FormData): Promise<FormState> {
   const validatedFields = SignInSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -141,8 +152,8 @@ export async function signInAction(prevState: any, formData: FormData) {
   if (!validatedFields.success) {
     return {
       status: 'error',
-      message: 'Invalid form data',
-      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Invalid form data.',
+      fieldErrors: validatedFields.error.flatten().fieldErrors,
     };
   }
 

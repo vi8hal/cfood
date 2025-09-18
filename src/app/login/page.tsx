@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { signInAction } from '@/lib/actions';
-import { FormState } from '@/lib/types';
+import type { FormState } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {

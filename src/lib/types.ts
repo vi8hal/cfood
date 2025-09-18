@@ -54,17 +54,8 @@ export type User = {
 };
 
 
-export type FormState =
-  | {
-      status: 'success';
-      message: string;
-    }
-  | {
-      status: 'error';
-      message: string;
-      errors?: Array<{
-        path: string;
-        message: string;
-      }>;
-    }
-  | null;
+export type FormState = {
+  status: 'success' | 'error';
+  message: string;
+  fieldErrors?: Record<string, string[]>;
+} | null;

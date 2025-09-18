@@ -1,13 +1,12 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signUpAction, verifyOtpAction } from '@/lib/actions';
-import { FormState } from '@/lib/types';
+import { signUpAction } from '@/lib/actions';
+import type { FormState } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -39,115 +38,68 @@ const SignUpSchema = z
 
 type SignUpFormValues = z.infer<typeof SignUpSchema>;
 
-function SubmitButton({ text }: { text: string }) {
+function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-      {text}
+      Create Account
     </Button>
   );
 }
 
 export default function SignupPage() {
-  const [showOtpForm, setShowOtpForm] = useState(false);
-  const [emailForOtp, setEmailForOtp] = useState('');
   const { toast } = useToast();
-  const router = useRouter();
-
   const [signUpState, signUpFormAction] = useActionState<FormState, FormData>(
     signUpAction,
     null
   );
 
-  const [verifyOtpState, verifyOtpFormAction] = useActionState<
-    FormState,
-    FormData
-  >(verifyOtpAction, null);
-
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors: formErrors },
-    getValues,
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
     mode: 'onBlur',
   });
 
   useEffect(() => {
-    if (signUpState?.status === 'success') {
-      toast({
-        title: 'Registration Successful',
-        description: signUpState.message,
-      });
-      setEmailForOtp(getValues('email'));
-      setShowOtpForm(true);
-    } else if (signUpState?.status === 'error') {
-      toast({
-        variant: 'destructive',
-        title: 'Registration Failed',
-        description: signUpState.message,
-      });
+    if (signUpState?.status === 'error') {
+      if (signUpState.fieldErrors) {
+        for (const [field, message] of Object.entries(
+          signUpState.fieldErrors
+        )) {
+          setError(field as keyof SignUpFormValues, {
+            type: 'server',
+            message: message[0],
+          });
+        }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Registration Failed',
+          description: signUpState.message,
+        });
+      }
     }
-  }, [signUpState, toast, getValues]);
+  }, [signUpState, toast, setError]);
 
-  useEffect(() => {
-    if (verifyOtpState?.status === 'success') {
-      toast({
-        title: 'Verification Successful',
-        description: verifyOtpState.message,
-      });
-      router.push('/dashboard');
-    } else if (verifyOtpState?.status === 'error') {
-      toast({
-        variant: 'destructive',
-        title: 'Verification Failed',
-        description: verifyOtpState.message,
-      });
-    }
-  }, [verifyOtpState, toast, router]);
 
-  if (showOtpForm) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-secondary/50">
-        <Card className="w-full max-w-md">
-          <form action={verifyOtpFormAction}>
-            <CardHeader className="text-center">
-              <CardTitle className="font-headline text-3xl">
-                Verify Your Email
-              </CardTitle>
-              <CardDescription>
-                Enter the 6-digit code sent to {emailForOtp}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Input type="hidden" name="email" value={emailForOtp} />
-              <div className="space-y-2">
-                <Label htmlFor="otp">Verification Code</Label>
-                <Input
-                  id="otp"
-                  name="otp"
-                  type="text"
-                  required
-                  maxLength={6}
-                  placeholder="123456"
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex flex-col gap-4">
-              <SubmitButton text="Verify Account" />
-            </CardFooter>
-          </form>
-        </Card>
-      </div>
-    );
-  }
+  const onSubmit = (data: SignUpFormValues) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
+    });
+    signUpFormAction(formData);
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="w-full max-w-md">
-        <form action={signUpFormAction}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <UtensilsCrossed className="h-10 w-10 text-primary" />
@@ -162,21 +114,16 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                {...register('name')}
-              />
+              <Input id="name" {...register('name')} />
               {formErrors.name && (
-                <p className="text-sm text-destructive">{formErrors.name.message}</p>
+                <p className="text-sm text-destructive">
+                  {formErrors.name.message}
+                </p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register('email')}
-              />
+              <Input id="email" type="email" {...register('email')} />
               {formErrors.email && (
                 <p className="text-sm text-destructive">
                   {formErrors.email.message}
@@ -185,11 +132,7 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                {...register('password')}
-              />
+              <Input id="password" type="password" {...register('password')} />
               {formErrors.password && (
                 <p className="text-sm text-destructive">
                   {formErrors.password.message}
@@ -203,7 +146,7 @@ export default function SignupPage() {
                 type="password"
                 {...register('confirmPassword')}
               />
-               {formErrors.confirmPassword && (
+              {formErrors.confirmPassword && (
                 <p className="text-sm text-destructive">
                   {formErrors.confirmPassword.message}
                 </p>
@@ -211,7 +154,7 @@ export default function SignupPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <SubmitButton text="Sign Up" />
+            <SubmitButton />
             <p className="text-xs text-center text-muted-foreground">
               Already have an account?{' '}
               <Link href="/login" className="underline hover:text-primary">
