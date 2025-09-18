@@ -8,7 +8,7 @@ async function getRecipes(): Promise<Recipe[]> {
     const result = await pool.query(`
       SELECT
         r.id, r.title, r.description, r.ingredients, r.instructions, r.tags,
-        r."prepTime", r."cookTime", r.servings, r.price, r.createdat, r.updatedat,
+        r.prepTime, r.cookTime, r.servings, r.price, r.createdat, r.updatedat,
         u.id as "authorId", u.name as "authorName", u.email as "authorEmail",
         u.image as "authorImage", u.location as "authorLocation"
       FROM "Recipe" r
@@ -22,7 +22,7 @@ async function getRecipes(): Promise<Recipe[]> {
       description: dbRecipe.description,
       ingredients: dbRecipe.ingredients,
       instructions: dbRecipe.instructions,
-      tags: dbRecipe.tags,
+      tags: dbRecipe.tags || [],
       prepTime: dbRecipe.prepTime,
       cookTime: dbRecipe.cookTime,
       servings: dbRecipe.servings,
