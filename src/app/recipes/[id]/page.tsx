@@ -20,11 +20,6 @@ import { NutritionFacts } from '@/components/nutrition-facts';
 import SaveRecipeButton from '@/components/save-recipe-button';
 import { pool } from '@/lib/db';
 
-type PageProps = {
-  params: { id: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
-
 async function getRecipe(id: string): Promise<RecipeType | null> {
   try {
     const result = await pool.query(
@@ -35,8 +30,8 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
         r.ingredients,
         r.instructions,
         r.tags,
-        r.prepTime,
-        r.cookTime,
+        r.preptime,
+        r.cooktime,
         r.servings,
         r.price,
         r.createdat,
@@ -66,8 +61,8 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
         ingredients: dbRecipe.ingredients,
         instructions: dbRecipe.instructions,
         tags: dbRecipe.tags || [],
-        prepTime: dbRecipe.prepTime,
-        cookTime: dbRecipe.cookTime,
+        prepTime: dbRecipe.preptime,
+        cookTime: dbRecipe.cooktime,
         servings: dbRecipe.servings,
         price: parseFloat(dbRecipe.price),
         createdAt: dbRecipe.createdat,
