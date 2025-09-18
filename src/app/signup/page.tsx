@@ -66,20 +66,14 @@ export default function SignupPage() {
 
   const {
     register,
-    handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
+    mode: 'onBlur', // Validate on blur
   });
-  
-  const onSubmit = (data: SignUpFormValues) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value);
-    });
-    signUpFormAction(formData);
-  };
 
+  const formData = watch();
 
   useEffect(() => {
     if (signUpState?.status === 'success') {
@@ -87,13 +81,7 @@ export default function SignupPage() {
         title: 'Registration Successful',
         description: signUpState.message,
       });
-      // A bit of a hack to get the email, since we don't have direct access
-      // to the form data that was successfully submitted.
-      const form = document.querySelector('form');
-      if (form) {
-        const formData = new FormData(form);
-        setEmailForOtp(formData.get('email') as string);
-      }
+      setEmailForOtp(formData.email);
       setShowOtpForm(true);
     } else if (signUpState?.status === 'error') {
       toast({
@@ -101,8 +89,10 @@ export default function SignupPage() {
         title: 'Registration Failed',
         description: signUpState.message,
       });
+      // Here you could parse signUpState.errors to set form errors
     }
-  }, [signUpState, toast]);
+  }, [signUpState, toast, formData.email]);
+
 
   useEffect(() => {
     if (verifyOtpState?.status === 'error') {
@@ -153,7 +143,7 @@ export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="w-full max-w-md">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form action={signUpFormAction}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <UtensilsCrossed className="h-10 w-10 text-primary" />
