@@ -8,12 +8,12 @@ async function getRecipes(): Promise<Recipe[]> {
     const result = await pool.query(`
       SELECT
         r.id, r.title, r.description, r.ingredients, r.instructions, r.tags,
-        r."prepTime", r."cookTime", r.servings, r.price, r."createdAt", r."updatedAt",
+        r."prepTime", r."cookTime", r.servings, r.price, r.createdAt, r.updatedAt,
         u.id as "authorId", u.name as "authorName", u.email as "authorEmail",
         u.image as "authorImage", u.location as "authorLocation"
       FROM "Recipe" r
       JOIN "User" u ON r."authorId" = u.id
-      ORDER BY r."createdAt" DESC
+      ORDER BY r.createdAt DESC
     `);
 
     return result.rows.map((dbRecipe) => ({
@@ -27,8 +27,8 @@ async function getRecipes(): Promise<Recipe[]> {
       cookTime: dbRecipe.cookTime,
       servings: dbRecipe.servings,
       price: parseFloat(dbRecipe.price),
-      createdAt: dbRecipe.createdAt,
-      updatedAt: dbRecipe.updatedAt,
+      createdAt: dbRecipe.createdat,
+      updatedAt: dbRecipe.updatedat,
       authorId: dbRecipe.authorId,
       author: {
         id: dbRecipe.authorId,
