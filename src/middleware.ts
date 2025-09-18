@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, updateSession } from '@/lib/auth';
 
-const protectedRoutes = ['/dashboard', '/recipes/new'];
-const publicRoutes = ['/login', '/signup', '/'];
+const protectedRoutes = ['/dashboard', '/recipes/new', '/profile'];
+const publicOnlyRoutes = ['/login', '/signup'];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route));
+  const isPublicOnlyRoute = publicOnlyRoutes.includes(path);
 
   // Try to get the session from the cookie
   const session = await getSession();
@@ -17,17 +18,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.nextUrl));
   }
 
-  if (session?.userId && publicRoutes.includes(path)) {
-     // If user is authenticated and tries to access a public-only route,
+  if (session?.userId && isPublicOnlyRoute) {
+     // If user is authenticated and tries to access a public-only route (like login),
      // redirect them to the dashboard.
-     // return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
+     return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
   }
   
-  // If the user is authenticated, update the session cookie to refresh its expiration.
+  // If the user is authenticated, attempt to update the session cookie to refresh its expiration.
+  // This will only create a new response if a session exists.
   if (session?.userId) {
       return await updateSession(request);
   }
 
+  // Otherwise, continue with the request as is.
   return NextResponse.next();
 }
 

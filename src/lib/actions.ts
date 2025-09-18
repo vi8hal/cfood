@@ -4,7 +4,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
-import { createSession } from '@/lib/auth';
+import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 
 const SignUpSchema = z
@@ -178,13 +178,13 @@ export async function signInAction(prevState: any, formData: FormData) {
     };
   }
 
+  // A redirect in a server action can't be caught by the client-side `useActionState` hook
+  // for showing a toast. The redirect is now handled on the client in LoginPage.
   return { status: 'success', message: 'Sign-in successful! Redirecting...' };
 }
 
 
 export async function signOutAction() {
-    // This action would clear the session cookie
-    // Implementation depends on the auth library used
-    // For now, we'll simulate by redirecting
+    await deleteSession();
     redirect('/login');
 }

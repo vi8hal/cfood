@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -12,6 +11,7 @@ import {
   Menu,
   PlusCircle,
   Search,
+  User,
   UtensilsCrossed,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,32 +27,54 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Input } from '../ui/input';
 import { useEffect, useState } from 'react';
-import { getSession } from '@/lib/session';
 import { signOutAction } from '@/lib/actions';
+import { getClientSession } from '@/lib/session';
 
 const navLinks = [
   { href: '/recipes', label: 'Recipes', icon: ChefHat },
   { href: '/map', label: 'Food Map', icon: MapPin },
+];
+
+const authenticatedNavLinks = [
   { href: '/recipes/new', label: 'Add Recipe', icon: PlusCircle },
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
 ];
 
 export function AppHeader() {
   const pathname = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Using `any` for session to avoid circular dependency issues with types
+  const [session, setSession] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
-      const session = await getSession();
-      setIsLoggedIn(!!session);
+      try {
+        const sessionData = await getClientSession();
+        setSession(sessionData);
+      } catch (error) {
+        console.error("Session check failed", error);
+        setSession(null);
+      } finally {
+        setIsLoading(false);
+      }
     };
     checkSession();
-  }, [pathname]);
+  }, [pathname]); // Re-check session on path change
+
+  const allNavLinks = session ? [...navLinks, ...authenticatedNavLinks] : navLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
@@ -66,6 +88,18 @@ export function AppHeader() {
           </Link>
           <nav className="flex items-center space-x-6 text-sm font-medium">
             {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  'transition-colors hover:text-primary',
+                  pathname === link.href ? 'text-primary' : 'text-foreground/60'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+             {session && authenticatedNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -111,7 +145,7 @@ export function AppHeader() {
                 />
               </div>
               <div className="flex flex-col space-y-2">
-                {navLinks.map((link) => (
+                {allNavLinks.map((link) => (
                   <Link
                     key={link.href}
                     href={link.href}
@@ -136,15 +170,13 @@ export function AppHeader() {
               className="w-full pl-10"
             />
           </div>
-          {isLoggedIn ? (
-            <nav className="flex items-center space-x-2">
+          {isLoading ? (
+             <div className="h-10 w-28 animate-pulse rounded-md bg-muted" />
+          ) : session ? (
+            <div className="flex items-center gap-4">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Notifications"
-                  >
+                  <Button variant="ghost" size="icon" aria-label="Notifications">
                     <Bell className="h-5 w-5" />
                   </Button>
                 </PopoverTrigger>
@@ -157,21 +189,49 @@ export function AppHeader() {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Avatar>
-                <AvatarImage src="https://i.pravatar.cc/150" alt="User avatar" />
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
-              <form action={signOutAction}>
-                <Button variant="ghost" size="icon" aria-label="Sign Out" type="submit">
-                  <LogOut className="h-5 w-5" />
-                </Button>
-              </form>
-            </nav>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar>
+                      <AvatarImage src={session.user?.image || "https://i.pravatar.cc/150"} alt="User avatar" />
+                      <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{session.user?.name || 'User'}</p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {session.user?.email || 'user@example.com'}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard"><LayoutDashboard className="mr-2"/>Dashboard</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                     <Link href="/profile"><User className="mr-2"/>Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <form action={signOutAction} className="w-full">
+                    <DropdownMenuItem asChild>
+                      <button type="submit" className="w-full">
+                        <LogOut className="mr-2"/>
+                        Sign Out
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
-            <Button asChild variant="ghost" size="icon" aria-label="Login">
-              <Link href="/login">
-                <LogIn className="h-5 w-5" />
-              </Link>
+             <Button asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2" /> Login
+                </Link>
             </Button>
           )}
         </div>
