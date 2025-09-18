@@ -53,7 +53,6 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
 
     const dbRecipe = result.rows[0];
 
-    // The query returns snake_case columns, so we map them to camelCase
     const recipe: RecipeType = {
         id: dbRecipe.id,
         title: dbRecipe.title,
@@ -117,7 +116,7 @@ export default async function RecipePage({ params }: { params: { id: string } })
         <div className="flex items-center justify-between">
           <div className="flex items-center text-muted-foreground">
             <Avatar className="h-8 w-8 mr-2">
-              <AvatarImage src={recipe.authorImage} alt={recipe.author.name} />
+              <AvatarImage src={recipe.authorImage || undefined} alt={recipe.author.name || ''} />
               <AvatarFallback>{(recipe.author.name || 'A').charAt(0)}</AvatarFallback>
             </Avatar>
             <span>By {recipe.author.name}</span>

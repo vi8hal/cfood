@@ -1,7 +1,7 @@
 import { getSession } from '@/lib/auth';
-import { pool } from '@/lib/db';
-import { User } from '@/lib/types';
 import { redirect } from 'next/navigation';
+import { User } from '@/lib/types';
+import { pool } from '@/lib/db';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, MapPin, Calendar } from 'lucide-react';
@@ -12,16 +12,27 @@ async function getUserProfile(userId: string): Promise<User | null> {
   if (result.rows.length === 0) {
     return null;
   }
-  return result.rows[0];
+  const dbUser = result.rows[0];
+
+  return {
+      id: dbUser.id,
+      name: dbUser.name,
+      email: dbUser.email,
+      image: dbUser.image,
+      location: dbUser.location,
+      emailVerified: dbUser.emailVerified,
+      createdAt: dbUser.createdat,
+      updatedAt: dbUser.updatedat,
+  };
 }
 
 export default async function ProfilePage() {
   const session = await getSession();
-  if (!session?.userId) {
+  if (!session?.user) {
     redirect('/login');
   }
 
-  const user = await getUserProfile(session.userId);
+  const user = await getUserProfile(session.user.id);
 
   if (!user) {
     // This case should be rare if a session exists, but it's good practice
@@ -35,7 +46,7 @@ export default async function ProfilePage() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
           <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-primary">
-            <AvatarImage src={user.image || `https://i.pravatar.cc/150?u=${user.email}`} alt={user.name} />
+            <AvatarImage src={user.image || `https://i.pravatar.cc/150?u=${user.email}`} alt={user.name || ''} />
             <AvatarFallback className="text-4xl">{(user.name || 'U').charAt(0)}</AvatarFallback>
           </Avatar>
           <CardTitle className="text-3xl font-headline">{user.name}</CardTitle>

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
-import { createSession, deleteSession, getSession } from '@/lib/auth';
+import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
@@ -200,5 +200,4 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
 export async function signOutAction() {
     await deleteSession();
     revalidatePath('/', 'layout');
-    redirect('/login');
 }

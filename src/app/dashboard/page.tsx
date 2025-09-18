@@ -4,9 +4,9 @@ import { getSession } from "@/lib/auth";
 import { pool } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { Recipe } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
 async function getUserStats(userId: string) {
-    // For now, we only fetch recipe count. Orders and Favorites are mocked.
     const recipeCountResult = await pool.query('SELECT COUNT(*) FROM "Recipe" WHERE "authorId" = $1', [userId]);
     const recipes = parseInt(recipeCountResult.rows[0].count, 10) || 0;
 
@@ -17,7 +17,7 @@ async function getUserStats(userId: string) {
     }
 }
 
-async function getLatestRecipes(userId: string): Promise<Recipe[]> {
+async function getLatestRecipes(userId: string): Promise<Pick<Recipe, 'id' | 'title'>[]> {
     const result = await pool.query(
         `SELECT id, title FROM "Recipe" WHERE "authorId" = $1 ORDER BY createdat DESC LIMIT 5`,
         [userId]
@@ -28,21 +28,17 @@ async function getLatestRecipes(userId: string): Promise<Recipe[]> {
 
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session?.userId) {
-    // This should be handled by middleware, but as a safeguard
+  if (!session?.user) {
     redirect('/login');
   }
 
-  const userResult = await pool.query('SELECT name FROM "User" WHERE id = $1', [session.userId]);
-  const userName = userResult.rows.length > 0 ? userResult.rows[0].name : "User";
-  
-  const userStats = await getUserStats(session.userId);
-  const latestRecipes = await getLatestRecipes(session.userId);
+  const userStats = await getUserStats(session.user.id);
+  const latestRecipes = await getLatestRecipes(session.user.id);
 
   return (
     <div className="container mx-auto px-4 py-8">
       <header className="mb-8">
-        <h1 className="text-4xl font-bold font-headline">Welcome, {userName}!</h1>
+        <h1 className="text-4xl font-bold font-headline">Welcome, {session.user.name}!</h1>
         <p className="text-lg text-muted-foreground mt-2">
           Here's a quick look at your Culinary Hub activity.
         </p>
@@ -64,10 +60,13 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">My Orders</CardTitle>
-            <Utensils className="h-4 w-4 text-muted-foreground" />
+             <Utensils className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.orders}</div>
+            <div className="flex items-baseline gap-4">
+              <div className="text-2xl font-bold">{userStats.orders}</div>
+              <Badge variant="outline">Coming Soon</Badge>
+            </div>
             <p className="text-xs text-muted-foreground">
               Meals you have ordered
             </p>
@@ -79,7 +78,10 @@ export default async function DashboardPage() {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.favorites}</div>
+            <div className="flex items-baseline gap-4">
+              <div className="text-2xl font-bold">{userStats.favorites}</div>
+              <Badge variant="outline">Coming Soon</Badge>
+            </div>
             <p className="text-xs text-muted-foreground">
               Recipes you have saved
             </p>
@@ -95,9 +97,11 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             {latestRecipes.length > 0 ? (
-                <ul>
+                <ul className="space-y-2">
                     {latestRecipes.map(recipe => (
-                        <li key={recipe.id} className="text-muted-foreground">{recipe.title}</li>
+                        <li key={recipe.id} className="text-muted-foreground hover:text-primary transition-colors">
+                          <a href={`/recipes/${recipe.id}`}>{recipe.title}</a>
+                        </li>
                     ))}
                 </ul>
             ) : (
@@ -111,7 +115,7 @@ export default async function DashboardPage() {
             <CardDescription>A list of meals you have recently ordered.</CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground">Order history will be implemented here.</p>
+            <p className="text-muted-foreground">Order history will be implemented here. Stay tuned!</p>
           </CardContent>
         </Card>
       </div>
