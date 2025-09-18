@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -30,6 +31,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [state, formAction] = useActionState<FormState, FormData>(
     signInAction,
     null
@@ -37,14 +39,20 @@ export default function LoginPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (state?.status === 'error') {
+    if (state?.status === 'success') {
+      toast({
+        title: 'Sign-In Successful',
+        description: state.message,
+      });
+      router.push('/dashboard');
+    } else if (state?.status === 'error') {
       toast({
         variant: 'destructive',
         title: 'Sign-In Failed',
         description: state.message,
       });
     }
-  }, [state, toast]);
+  }, [state, toast, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, updateSession } from '@/lib/auth';
 
 const protectedRoutes = ['/dashboard', '/recipes/new', '/profile'];
-const publicOnlyRoutes = ['/login', '/signup'];
+const publicOnlyRoutes = ['/login', '/signup', '/verify-otp'];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -27,7 +27,8 @@ export async function middleware(request: NextRequest) {
   // If the user is authenticated, attempt to update the session cookie to refresh its expiration.
   // This will only create a new response if a session exists.
   if (session?.userId) {
-      return await updateSession(request);
+      const response = await updateSession(request);
+      return response || NextResponse.next();
   }
 
   // Otherwise, continue with the request as is.

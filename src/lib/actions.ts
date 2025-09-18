@@ -4,9 +4,10 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
-import { createSession, deleteSession } from '@/lib/auth';
+import { createSession, deleteSession, getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
+import { revalidatePath } from 'next/cache';
 
 const SignUpSchema = z
   .object({
@@ -69,7 +70,7 @@ export async function signUpAction(prevState: any, formData: FormData): Promise<
     console.error(`Sign-up failed for ${email}:`, error);
     return {
       status: 'error',
-      message: 'An unexpected error occurred on the server.',
+      message: 'An unexpected error occurred during sign-up.',
     };
   }
 
@@ -131,7 +132,7 @@ export async function verifyOtpAction(prevState: any, formData: FormData): Promi
     };
   }
   
-  // A redirect will be handled by the client-side component after showing a success toast.
+  revalidatePath('/dashboard');
   return {
     status: 'success',
     message: 'Your account has been successfully verified!',
@@ -174,10 +175,8 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
     }
     
     if (!user.emailVerified) {
-        return {
-            status: 'error',
-            message: 'Email not verified. Please check your inbox for the verification code.',
-        };
+        // Resend OTP logic could be added here if desired
+        redirect(`/verify-otp?email=${encodeURIComponent(email)}&resend=true`);
     }
 
     await createSession(user.id);
@@ -190,11 +189,16 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
     };
   }
   
-  redirect('/dashboard');
+  revalidatePath('/dashboard');
+  return {
+    status: 'success',
+    message: "Welcome back!",
+  }
 }
 
 
 export async function signOutAction() {
     await deleteSession();
+    revalidatePath('/', 'layout');
     redirect('/login');
 }

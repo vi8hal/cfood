@@ -49,8 +49,11 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  image?: string;
-  location?: string;
+  image?: string | null;
+  location?: string | null;
+  emailVerified?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 
