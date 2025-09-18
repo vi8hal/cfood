@@ -116,7 +116,6 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
     
     await createSession(user.id);
     
-    return { status: 'success', message: 'Verification successful! Redirecting...' };
   } catch (error) {
     console.error('OTP verification failed:', error);
     return {
@@ -124,6 +123,8 @@ export async function verifyOtpAction(prevState: any, formData: FormData) {
       message: 'An unexpected error occurred during OTP verification.',
     };
   }
+  
+  redirect('/dashboard');
 }
 
 const SignInSchema = z.object({
@@ -177,10 +178,8 @@ export async function signInAction(prevState: any, formData: FormData) {
       message: 'An unexpected error occurred. Please try again.',
     };
   }
-
-  // A redirect in a server action can't be caught by the client-side `useActionState` hook
-  // for showing a toast. The redirect is now handled on the client in LoginPage.
-  return { status: 'success', message: 'Sign-in successful! Redirecting...' };
+  
+  redirect('/dashboard');
 }
 
 

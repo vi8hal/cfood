@@ -74,7 +74,7 @@ export function AppHeader() {
     checkSession();
   }, [pathname]); // Re-check session on path change
 
-  const allNavLinks = session ? [...navLinks, ...authenticatedNavLinks] : navLinks;
+  const allNavLinks = session?.user ? [...navLinks, ...authenticatedNavLinks] : navLinks;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 no-print">
@@ -99,7 +99,7 @@ export function AppHeader() {
                 {link.label}
               </Link>
             ))}
-             {session && authenticatedNavLinks.map((link) => (
+             {session?.user && authenticatedNavLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -172,7 +172,7 @@ export function AppHeader() {
           </div>
           {isLoading ? (
              <div className="h-10 w-28 animate-pulse rounded-md bg-muted" />
-          ) : session ? (
+          ) : session?.user ? (
             <div className="flex items-center gap-4">
               <Popover>
                 <PopoverTrigger asChild>
@@ -194,17 +194,17 @@ export function AppHeader() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar>
-                      <AvatarImage src={session.user?.image || "https://i.pravatar.cc/150"} alt="User avatar" />
-                      <AvatarFallback>U</AvatarFallback>
+                      <AvatarImage src={session.user.image || "https://i.pravatar.cc/150"} alt="User avatar" />
+                      <AvatarFallback>{session.user.name?.charAt(0) || 'U'}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{session.user?.name || 'User'}</p>
+                      <p className="text-sm font-medium leading-none">{session.user.name || 'User'}</p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {session.user?.email || 'user@example.com'}
+                        {session.user.email || 'user@example.com'}
                       </p>
                     </div>
                   </DropdownMenuLabel>
