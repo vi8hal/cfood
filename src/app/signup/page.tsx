@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -21,7 +21,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const SignUpSchema = z
@@ -79,8 +78,13 @@ export default function SignupPage() {
         title: 'Registration Successful',
         description: signUpState.message,
       });
-      const formData = new FormData(document.querySelector('form')!);
-      setEmailForOtp(formData.get('email') as string);
+      // A bit of a hack to get the email, since we don't have direct access
+      // to the form data that was successfully submitted.
+      const form = document.querySelector('form');
+      if (form) {
+        const formData = new FormData(form);
+        setEmailForOtp(formData.get('email') as string);
+      }
       setShowOtpForm(true);
     } else if (signUpState?.status === 'error') {
       toast({
@@ -140,13 +144,7 @@ export default function SignupPage() {
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="w-full max-w-md">
-        <form action={signUpFormAction} onSubmit={handleSubmit((data) => {
-            const formData = new FormData();
-            Object.entries(data).forEach(([key, value]) => {
-                formData.append(key, value);
-            });
-            signUpFormAction(formData);
-        })}>
+        <form action={signUpFormAction}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <UtensilsCrossed className="h-10 w-10 text-primary" />
@@ -163,25 +161,25 @@ export default function SignupPage() {
               <Label htmlFor="name">Name</Label>
               <Input
                 id="name"
+                name="name"
                 type="text"
                 placeholder="John Doe"
-                {...register('name')}
               />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
+              {signUpState?.errors?.find(e => e.path === 'name')?.message && (
+                <p className="text-sm text-destructive">{signUpState.errors.find(e => e.path === 'name')?.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
+                name="email"
                 type="email"
                 placeholder="m@example.com"
-                {...register('email')}
               />
-              {errors.email && (
+              {signUpState?.errors?.find(e => e.path === 'email')?.message && (
                 <p className="text-sm text-destructive">
-                  {errors.email.message}
+                  {signUpState.errors.find(e => e.path === 'email')?.message}
                 </p>
               )}
             </div>
@@ -189,12 +187,12 @@ export default function SignupPage() {
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
+                name="password"
                 type="password"
-                {...register('password')}
               />
-              {errors.password && (
+              {signUpState?.errors?.find(e => e.path === 'password')?.message && (
                 <p className="text-sm text-destructive">
-                  {errors.password.message}
+                  {signUpState.errors.find(e => e.path === 'password')?.message}
                 </p>
               )}
             </div>
@@ -202,12 +200,12 @@ export default function SignupPage() {
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                {...register('confirmPassword')}
               />
-              {errors.confirmPassword && (
+               {signUpState?.errors?.find(e => e.path === 'confirmPassword')?.message && (
                 <p className="text-sm text-destructive">
-                  {errors.confirmPassword.message}
+                  {signUpState.errors.find(e => e.path === 'confirmPassword')?.message}
                 </p>
               )}
             </div>
