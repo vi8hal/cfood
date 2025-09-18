@@ -48,7 +48,7 @@ async function getRecipes(): Promise<Recipe[]> {
 
 export default async function RecipesPage() {
   const recipes = await getRecipes();
-  const allTags = ['all', ...Array.from(new Set(recipes.flatMap(r => r.tags as string[])))];
+  const allTags = ['all', ...Array.from(new Set(recipes.flatMap(r => r.tags || [])))];
 
 
   return (
