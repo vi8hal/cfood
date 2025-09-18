@@ -65,7 +65,7 @@ export function RecipesClient({ initialRecipes, allTags }: RecipesClientProps) {
             <SelectValue placeholder="Filter by tag" />
           </SelectTrigger>
           <SelectContent>
-            {allTags.map((tag) => (
+            {(allTags || []).map((tag) => (
               <SelectItem key={tag} value={tag}>
                 {tag === 'all' ? 'All Tags' : tag}
               </SelectItem>
