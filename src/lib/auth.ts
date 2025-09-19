@@ -58,13 +58,14 @@ export async function getSession(): Promise<{
 
   try {
     const userResult = await pool.query(
-      'SELECT id, name, email, image FROM "User" WHERE id = $1',
+      'SELECT id, name, email, image, location, createdat as "createdAt", updatedat as "updatedAt", emailVerified FROM "User" WHERE id = $1',
       [sessionPayload.userId]
     );
     if (userResult.rows.length === 0) {
       return null;
     }
-    return {user: userResult.rows[0]};
+    const user: User = userResult.rows[0];
+    return {user};
   } catch (error) {
     console.error('Failed to fetch user for session:', error);
     return null;

@@ -4,6 +4,8 @@ import { getSession, updateSession } from '@/lib/auth';
 const protectedRoutes = ['/dashboard', '/recipes/new', '/profile'];
 const publicOnlyRoutes = ['/login', '/signup', '/verify-otp'];
 
+export const runtime = 'nodejs';
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const isProtectedRoute = protectedRoutes.some((route) => path.startsWith(route));
@@ -12,13 +14,13 @@ export async function middleware(request: NextRequest) {
   // Try to get the session from the cookie
   const session = await getSession();
 
-  if (isProtectedRoute && !session?.userId) {
+  if (isProtectedRoute && !session?.user) {
     // If user is not authenticated and tries to access a protected route,
     // redirect them to the login page.
     return NextResponse.redirect(new URL('/login', request.nextUrl));
   }
 
-  if (session?.userId && isPublicOnlyRoute) {
+  if (session?.user && isPublicOnlyRoute) {
      // If user is authenticated and tries to access a public-only route (like login),
      // redirect them to the dashboard.
      return NextResponse.redirect(new URL('/dashboard', request.nextUrl));
@@ -26,7 +28,7 @@ export async function middleware(request: NextRequest) {
   
   // If the user is authenticated, attempt to update the session cookie to refresh its expiration.
   // This will only create a new response if a session exists.
-  if (session?.userId) {
+  if (session?.user) {
       const response = await updateSession(request);
       return response || NextResponse.next();
   }
