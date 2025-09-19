@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const SignUpSchema = z
   .object({
@@ -49,6 +50,7 @@ function SubmitButton() {
 }
 
 export default function SignupPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [signUpState, signUpFormAction] = useActionState<FormState, FormData>(
     signUpAction,
@@ -57,21 +59,28 @@ export default function SignupPage() {
 
   const {
     register,
-    formState: { errors: formErrors },
+    handleSubmit,
+    formState: { errors: formErrors, isSubmitting },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
     mode: 'onBlur',
   });
 
   useEffect(() => {
-    if (signUpState?.status === 'error' && signUpState.message && !signUpState.fieldErrors) {
+     if (signUpState?.status === 'success') {
+      toast({
+        title: 'Registration Initiated',
+        description: signUpState.message,
+      });
+      // The redirect is handled by the server action
+    } else if (signUpState?.status === 'error' && signUpState.message && !signUpState.fieldErrors) {
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
         description: signUpState.message,
       });
     }
-  }, [signUpState, toast]);
+  }, [signUpState, toast, router]);
 
 
   return (
@@ -151,6 +160,9 @@ export default function SignupPage() {
                 </p>
               )}
             </div>
+             {signUpState?.status === 'error' && signUpState.message && !signUpState.fieldErrors && (
+              <p className="text-sm text-destructive text-center">{signUpState.message}</p>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <SubmitButton />

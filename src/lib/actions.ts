@@ -9,6 +9,34 @@ import { redirect } from 'next/navigation';
 import type { FormState, RecipeFormValues } from './types';
 import { revalidatePath } from 'next/cache';
 
+export const RecipeSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters long.'),
+  description: z
+    .string()
+    .min(10, 'Description must be at least 10 characters long.'),
+  price: z.coerce
+    .number()
+    .min(0, "Price must be a positive number or 0 for free."),
+  location: z.string().min(3, 'Location is required.'),
+  contact: z.string().optional(),
+  ingredients: z.string().min(10, 'Please list at least one ingredient.'),
+  instructions: z
+    .string()
+    .min(20, 'Instructions must be at least 20 characters long.'),
+  prepTime: z.coerce
+    .number()
+    .int()
+    .positive('Prep time must be a positive number.'),
+  cookTime: z.coerce
+    .number()
+    .int()
+    .positive('Cook time must be a positive number.'),
+  servings: z.coerce
+    .number()
+    .int()
+    .positive('Servings must be a positive number.'),
+});
+
 const SignUpSchema = z
   .object({
     name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -23,7 +51,10 @@ const SignUpSchema = z
     path: ['confirmPassword'],
   });
 
-export async function signUpAction(prevState: any, formData: FormData): Promise<FormState> {
+export async function signUpAction(
+  prevState: any,
+  formData: FormData
+): Promise<FormState> {
   const validatedFields = SignUpSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -37,37 +68,39 @@ export async function signUpAction(prevState: any, formData: FormData): Promise<
   }
 
   const { name, email, password } = validatedFields.data;
+  const hashedPassword = await bcrypt.hash(password, 10);
   const client = await pool.connect();
+  
   try {
     await client.query('BEGIN');
-    const existingUserResult = await client.query('SELECT * FROM "User" WHERE email = $1', [email]);
-    if (existingUserResult.rows.length > 0) {
-      return { 
-        status: 'error', 
-        message: 'User with this email already exists.',
-        fieldErrors: { email: ['A user with this email already exists.'] }
+    const userResult = await client.query(
+      `INSERT INTO "User" (name, email, password)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (email) DO NOTHING
+       RETURNING id, email`,
+      [name, email, hashedPassword]
+    );
+
+    if (userResult.rows.length === 0) {
+       return {
+        status: 'error',
+        message: 'A user with this email already exists.',
+        fieldErrors: { email: ['A user with this email already exists.'] },
       };
     }
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    const userResult = await client.query(
-        'INSERT INTO "User" (name, email, password) VALUES ($1, $2, $3) RETURNING id',
-        [name, email, hashedPassword]
-      );
+
     const user = userResult.rows[0];
 
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     await client.query(
-        'INSERT INTO "OTP" ("userId", code, "expiresAt") VALUES ($1, $2, $3)',
-        [user.id, otpCode, otpExpires]
+      'INSERT INTO "OTP" ("userId", code, "expiresAt") VALUES ($1, $2, $3)',
+      [user.id, otpCode, otpExpires]
     );
 
     await sendVerificationEmail(email, otpCode);
     await client.query('COMMIT');
-
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(`Sign-up failed for ${email}:`, error);
@@ -83,11 +116,14 @@ export async function signUpAction(prevState: any, formData: FormData): Promise<
 }
 
 const VerifyOtpSchema = z.object({
-    email: z.string().email(),
-    otp: z.string().length(6, { message: "Your OTP must be 6 digits." }),
+  email: z.string().email(),
+  otp: z.string().length(6, { message: 'Your OTP must be 6 digits.' }),
 });
 
-export async function verifyOtpAction(prevState: any, formData: FormData): Promise<FormState> {
+export async function verifyOtpAction(
+  prevState: any,
+  formData: FormData
+): Promise<FormState> {
   const validatedFields = VerifyOtpSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -99,39 +135,42 @@ export async function verifyOtpAction(prevState: any, formData: FormData): Promi
       fieldErrors: validatedFields.error.flatten().fieldErrors,
     };
   }
-  
+
   const { email, otp } = validatedFields.data;
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const userResult = await client.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    const userResult = await client.query(
+      'SELECT * FROM "User" WHERE email = $1',
+      [email]
+    );
     if (userResult.rows.length === 0) {
-      // This is an unlikely scenario if they followed the sign-up flow, but good to handle.
       return { status: 'error', message: 'User not found.' };
     }
     const user = userResult.rows[0];
 
     const otpResult = await client.query(
-        'SELECT * FROM "OTP" WHERE "userId" = $1 AND code = $2 AND "expiresAt" > NOW() ORDER BY "createdAt" DESC LIMIT 1',
-        [user.id, otp]
+      'SELECT * FROM "OTP" WHERE "userId" = $1 AND code = $2 AND "expiresAt" > NOW() ORDER BY "createdAt" DESC LIMIT 1',
+      [user.id, otp]
     );
 
     if (otpResult.rows.length === 0) {
-        return { 
-          status: 'error', 
-          message: 'Invalid or expired OTP.',
-          fieldErrors: { otp: ['Invalid or expired OTP. Please try again.'] }
-        };
+      return {
+        status: 'error',
+        message: 'Invalid or expired OTP.',
+        fieldErrors: { otp: ['Invalid or expired OTP. Please try again.'] },
+      };
     }
     const otpRecord = otpResult.rows[0];
 
-    await client.query('UPDATE "User" SET "emailVerified" = NOW() WHERE id = $1', [user.id]);
+    await client.query('UPDATE "User" SET "emailVerified" = NOW() WHERE id = $1', [
+      user.id,
+    ]);
 
-    await client.query('DELETE FROM "OTP" WHERE "userId" = $1', [user.id]);
-    
+    await client.query('DELETE FROM "OTP" WHERE id = $1', [otpRecord.id]);
+
     await createSession(user.id);
     await client.query('COMMIT');
-    
   } catch (error) {
     await client.query('ROLLBACK');
     console.error(`OTP verification failed for ${email}:`, error);
@@ -142,7 +181,7 @@ export async function verifyOtpAction(prevState: any, formData: FormData): Promi
   } finally {
     client.release();
   }
-  
+
   revalidatePath('/dashboard');
   return {
     status: 'success',
@@ -155,8 +194,10 @@ const SignInSchema = z.object({
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-
-export async function signInAction(prevState: any, formData: FormData): Promise<FormState> {
+export async function signInAction(
+  prevState: any,
+  formData: FormData
+): Promise<FormState> {
   const validatedFields = SignInSchema.safeParse(
     Object.fromEntries(formData.entries())
   );
@@ -172,26 +213,36 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
   const { email, password } = validatedFields.data;
 
   try {
-    const userResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    const userResult = await pool.query(
+      'SELECT * FROM "User" WHERE email = $1',
+      [email]
+    );
 
     if (userResult.rows.length === 0) {
-      return { status: 'error', message: 'Invalid credentials. Please try again.' };
+      return {
+        status: 'error',
+        message: 'Invalid credentials. Please try again.',
+      };
     }
 
     const user = userResult.rows[0];
     const passwordsMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordsMatch) {
-      return { status: 'error', message: 'Invalid credentials. Please try again.' };
+      return {
+        status: 'error',
+        message: 'Invalid credentials. Please try again.',
+      };
     }
-    
+
     if (!user.emailVerified) {
-        console.log(`User ${email} attempted login without verification. Redirecting to OTP.`);
-        redirect(`/verify-otp?email=${encodeURIComponent(email)}&resend=true`);
+      console.log(
+        `User ${email} attempted login without verification. Redirecting to OTP.`
+      );
+      redirect(`/verify-otp?email=${encodeURIComponent(email)}&resend=true`);
     }
 
     await createSession(user.id);
-
   } catch (error) {
     console.error('Sign-in error:', error);
     return {
@@ -199,48 +250,35 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
       message: 'An unexpected error occurred. Please try again.',
     };
   }
-  
+
   revalidatePath('/dashboard');
   return {
     status: 'success',
-    message: "Welcome back!",
-  }
+    message: 'Welcome back!',
+  };
 }
-
 
 export async function signOutAction() {
-    await deleteSession();
-    revalidatePath('/', 'layout');
+  await deleteSession();
+  revalidatePath('/', 'layout');
 }
 
-
-export const RecipeSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters long."),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters long."),
-  price: z.coerce.number().min(0, "Price must be a positive number or 0 for free."),
-  location: z.string().min(3, "Location is required."),
-  contact: z.string().optional(),
-  ingredients: z
-    .string()
-    .min(10, "Please list at least one ingredient."),
-  instructions: z
-    .string()
-    .min(20, "Instructions must be at least 20 characters long."),
-  prepTime: z.coerce.number().int().positive("Prep time must be a positive number."),
-  cookTime: z.coerce.number().int().positive("Cook time must be a positive number."),
-  servings: z.coerce.number().int().positive("Servings must be a positive number."),
-});
-
-export async function createRecipeAction(prevState: any, formData: FormData): Promise<FormState> {
+export async function createRecipeAction(
+  prevState: any,
+  formData: FormData
+): Promise<FormState> {
   const session = await getSession();
   if (!session?.user?.id) {
-    return { status: 'error', message: 'Authentication error. Please log in and try again.' };
+    return {
+      status: 'error',
+      message: 'Authentication error. Please log in and try again.',
+    };
   }
   const userId = session.user.id;
 
-  const validatedFields = RecipeSchema.safeParse(Object.fromEntries(formData.entries()));
+  const validatedFields = RecipeSchema.safeParse(
+    Object.fromEntries(formData.entries())
+  );
 
   if (!validatedFields.success) {
     return {
@@ -250,16 +288,32 @@ export async function createRecipeAction(prevState: any, formData: FormData): Pr
     };
   }
 
-  const { title, description, price, location, contact, ingredients, instructions, prepTime, cookTime, servings } = validatedFields.data;
+  const {
+    title,
+    description,
+    price,
+    location,
+    contact,
+    ingredients,
+    instructions,
+    prepTime,
+    cookTime,
+    servings,
+  } = validatedFields.data;
 
-  const ingredientsArray = ingredients.split('\n').filter(line => line.trim() !== '').map(line => {
-    const parts = line.trim().split(' ');
-    const quantity = parts[0] || '';
-    const item = parts.slice(1).join(' ').trim();
-    return { quantity, item };
-  });
+  const ingredientsArray = ingredients
+    .split('\n')
+    .filter((line) => line.trim() !== '')
+    .map((line) => {
+      const parts = line.trim().split(' ');
+      const quantity = parts[0] || '';
+      const item = parts.slice(1).join(' ').trim();
+      return { quantity, item };
+    });
 
-  const instructionsArray = instructions.split('\n').filter(line => line.trim() !== '');
+  const instructionsArray = instructions
+    .split('\n')
+    .filter((line) => line.trim() !== '');
 
   try {
     await pool.query(
@@ -268,8 +322,17 @@ export async function createRecipeAction(prevState: any, formData: FormData): Pr
         preptime, cooktime, servings, "authorId"
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
-        title, description, price, location, contact, JSON.stringify(ingredientsArray), instructionsArray, 
-        prepTime, cookTime, servings, userId
+        title,
+        description,
+        price,
+        location,
+        contact,
+        JSON.stringify(ingredientsArray),
+        instructionsArray,
+        prepTime,
+        cookTime,
+        servings,
+        userId,
       ]
     );
   } catch (error) {
@@ -284,6 +347,7 @@ export async function createRecipeAction(prevState: any, formData: FormData): Pr
   revalidatePath('/dashboard');
   return {
     status: 'success',
-    message: 'Your recipe has been successfully created and shared with the community!',
+    message:
+      'Your recipe has been successfully created and shared with the community!',
   };
 }
