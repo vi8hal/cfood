@@ -57,8 +57,6 @@ export default function SignupPage() {
 
   const {
     register,
-    handleSubmit,
-    setError,
     formState: { errors: formErrors },
   } = useForm<SignUpFormValues>({
     resolver: zodResolver(SignUpSchema),
@@ -66,40 +64,20 @@ export default function SignupPage() {
   });
 
   useEffect(() => {
-    if (signUpState?.status === 'error') {
-      if (signUpState.fieldErrors) {
-        for (const [field, message] of Object.entries(
-          signUpState.fieldErrors
-        )) {
-          setError(field as keyof SignUpFormValues, {
-            type: 'server',
-            message: message[0],
-          });
-        }
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Registration Failed',
-          description: signUpState.message,
-        });
-      }
+    if (signUpState?.status === 'error' && signUpState.message && !signUpState.fieldErrors) {
+      toast({
+        variant: 'destructive',
+        title: 'Registration Failed',
+        description: signUpState.message,
+      });
     }
-  }, [signUpState, toast, setError]);
-
-
-  const onSubmit = (data: SignUpFormValues) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value);
-    });
-    signUpFormAction(formData);
-  };
+  }, [signUpState, toast]);
 
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50">
       <Card className="w-full max-w-md">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form action={signUpFormAction}>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <UtensilsCrossed className="h-10 w-10 text-primary" />
@@ -114,28 +92,43 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" {...register('name')} />
+              <Input id="name" {...register('name')} name="name" />
               {formErrors.name && (
                 <p className="text-sm text-destructive">
                   {formErrors.name.message}
                 </p>
               )}
+               {signUpState?.fieldErrors?.name && (
+                <p className="text-sm text-destructive">
+                  {signUpState.fieldErrors.name[0]}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" {...register('email')} />
+              <Input id="email" type="email" {...register('email')} name="email" />
               {formErrors.email && (
                 <p className="text-sm text-destructive">
                   {formErrors.email.message}
                 </p>
               )}
+               {signUpState?.fieldErrors?.email && (
+                <p className="text-sm text-destructive">
+                  {signUpState.fieldErrors.email[0]}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register('password')} />
+              <Input id="password" type="password" {...register('password')} name="password" />
               {formErrors.password && (
                 <p className="text-sm text-destructive">
                   {formErrors.password.message}
+                </p>
+              )}
+               {signUpState?.fieldErrors?.password && (
+                <p className="text-sm text-destructive">
+                  {signUpState.fieldErrors.password[0]}
                 </p>
               )}
             </div>
@@ -145,10 +138,16 @@ export default function SignupPage() {
                 id="confirmPassword"
                 type="password"
                 {...register('confirmPassword')}
+                name="confirmPassword"
               />
               {formErrors.confirmPassword && (
                 <p className="text-sm text-destructive">
                   {formErrors.confirmPassword.message}
+                </p>
+              )}
+              {signUpState?.fieldErrors?.confirmPassword && (
+                <p className="text-sm text-destructive">
+                  {signUpState.fieldErrors.confirmPassword[0]}
                 </p>
               )}
             </div>
