@@ -34,6 +34,8 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
         r.cooktime,
         r.servings,
         r.price,
+        r.contact,
+        r.location,
         r.createdat,
         r.updatedat,
         u.id as "authorId",
@@ -75,10 +77,10 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
             location: dbRecipe.authorLocation,
         },
         authorImage: dbRecipe.authorImage,
+        contact: dbRecipe.contact,
+        location: dbRecipe.location,
         // Mocked data for fields not in DB
         nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
-        contact: dbRecipe.authorEmail,
-        location: dbRecipe.authorLocation,
         phone: '123-456-7890',
     };
 
@@ -215,10 +217,10 @@ export default async function RecipePage({ params }: { params: { id: string } })
                   <span className='font-medium'>{recipe.location}</span>
                 </div>
               )}
-               {recipe.contact && (
+               {recipe.author.email && (
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2" />
-                  <a href={`mailto:${recipe.contact}`} className='font-medium hover:underline'>{recipe.contact}</a>
+                  <a href={`mailto:${recipe.author.email}`} className='font-medium hover:underline'>{recipe.author.email}</a>
                 </div>
               )}
               {recipe.phone && (

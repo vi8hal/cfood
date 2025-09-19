@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -19,35 +18,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle, Upload } from "lucide-react";
-import { createRecipeAction } from "@/lib/actions";
-import type { FormState } from "@/lib/types";
+import { createRecipeAction, RecipeSchema } from "@/lib/actions";
+import type { FormState, RecipeFormValues } from "@/lib/types";
 import { useFormStatus } from "react-dom";
-
-const recipeSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters long"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters long"),
-  price: z.coerce.number().min(0, "Price must be a positive number or 0 for free"),
-  location: z.string().min(3, "Location is required"),
-  contact: z.string().min(3, "Contact info is required"),
-  ingredients: z
-    .string()
-    .min(10, "Please list at least one ingredient"),
-  instructions: z
-    .string()
-    .min(20, "Instructions must be at least 20 characters long"),
-  prepTime: z.coerce.number().positive("Prep time must be a positive number"),
-  cookTime: z.coerce.number().positive("Cook time must be a positive number"),
-  servings: z.coerce.number().positive("Servings must be a positive number"),
-});
-
-type RecipeFormValues = z.infer<typeof recipeSchema>;
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="w-full md:w-auto">
       {pending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
       {pending ? 'Submitting...' : 'Submit Recipe'}
     </Button>
@@ -59,7 +37,7 @@ export function RecipeUploadForm() {
   const [state, formAction] = useActionState<FormState, FormData>(createRecipeAction, null);
   
   const form = useForm<RecipeFormValues>({
-    resolver: zodResolver(recipeSchema),
+    resolver: zodResolver(RecipeSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -67,6 +45,10 @@ export function RecipeUploadForm() {
       contact: "",
       ingredients: "",
       instructions: "",
+      price: 0,
+      prepTime: 0,
+      cookTime: 0,
+      servings: 0,
     },
   });
 
@@ -159,7 +141,7 @@ export function RecipeUploadForm() {
                 name="location"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>Pickup Location</FormLabel>
                     <FormControl>
                         <Input placeholder="e.g., San Francisco, CA" {...field} />
                     </FormControl>
@@ -174,11 +156,11 @@ export function RecipeUploadForm() {
                 name="contact"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Contact Info</FormLabel>
+                    <FormLabel>Contact Info (Optional)</FormLabel>
                     <FormControl>
-                        <Input placeholder="e.g., your-email@example.com or phone number" {...field} />
+                        <Input placeholder="e.g., phone number for coordination" {...field} />
                     </FormControl>
-                    <FormDescription>How can people contact you about this recipe?</FormDescription>
+                    <FormDescription>How can people contact you? Your email is shared by default.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}

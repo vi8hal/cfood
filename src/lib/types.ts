@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { RecipeSchema } from "./actions";
+
 export type Recipe = {
   id: string;
   title: string;
@@ -10,6 +13,8 @@ export type Recipe = {
   servings: number;
   authorId: string;
   price: number;
+  location: string;
+  contact?: string | null;
   createdAt: Date;
   updatedAt: Date;
   author: {
@@ -19,7 +24,7 @@ export type Recipe = {
     image?: string | null;
     location?: string | null;
   };
-  // These fields are not in the current DB schema but are expected by components.
+  // This field is not in the current DB schema but is expected by components.
   // We can add them later or keep them as mock data.
   authorImage?: string;
   nutrition?: {
@@ -28,7 +33,6 @@ export type Recipe = {
     fat: number;
     carbs: number;
   };
-  contact?: string;
   phone?: string;
 };
 
@@ -59,6 +63,9 @@ export type FormState = {
   message: string;
   fieldErrors?: Record<string, string[] | undefined>;
 } | null;
+
+export type RecipeFormValues = z.infer<typeof RecipeSchema>;
+
 
 export type SessionPayload = {
   userId: string;
