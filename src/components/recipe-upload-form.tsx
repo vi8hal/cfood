@@ -1,5 +1,6 @@
 "use client";
 
+import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,7 +18,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Upload } from "lucide-react";
+import { LoaderCircle, Upload } from "lucide-react";
+import { createRecipeAction } from "@/lib/actions";
+import type { FormState } from "@/lib/types";
+import { useFormStatus } from "react-dom";
 
 const recipeSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters long"),
@@ -36,15 +40,24 @@ const recipeSchema = z.object({
   prepTime: z.coerce.number().positive("Prep time must be a positive number"),
   cookTime: z.coerce.number().positive("Cook time must be a positive number"),
   servings: z.coerce.number().positive("Servings must be a positive number"),
-  image: z.any()
-    .refine((file) => file?.length == 1, "Image is required.")
-    .refine((file) => file?.[0]?.size <= 5000000, `Max file size is 5MB.`),
 });
 
 type RecipeFormValues = z.infer<typeof recipeSchema>;
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+      {pending ? 'Submitting...' : 'Submit Recipe'}
+    </Button>
+  );
+}
+
 export function RecipeUploadForm() {
   const { toast } = useToast();
+  const [state, formAction] = useActionState<FormState, FormData>(createRecipeAction, null);
+  
   const form = useForm<RecipeFormValues>({
     resolver: zodResolver(recipeSchema),
     defaultValues: {
@@ -56,17 +69,38 @@ export function RecipeUploadForm() {
       instructions: "",
     },
   });
-  const imageRef = form.register("image");
+
+  useEffect(() => {
+    if (state?.status === 'success') {
+      toast({
+        title: "Recipe Submitted!",
+        description: state.message,
+      });
+      form.reset();
+    } else if (state?.status === 'error' && state.message && !state.fieldErrors) {
+      toast({
+        variant: 'destructive',
+        title: 'Submission Failed',
+        description: state.message,
+      });
+    }
+  }, [state, form, toast]);
 
 
-  function onSubmit(data: RecipeFormValues) {
-    console.log(data);
-    toast({
-      title: "Recipe Submitted!",
-      description: "Your recipe has been successfully submitted for review.",
-    });
-    form.reset();
-  }
+  // Set form errors from server action
+  useEffect(() => {
+    if (state?.fieldErrors) {
+      for (const [fieldName, errors] of Object.entries(state.fieldErrors)) {
+        if (errors) {
+          form.setError(fieldName as keyof RecipeFormValues, {
+            type: 'server',
+            message: errors.join(', '),
+          });
+        }
+      }
+    }
+  }, [state, form]);
+
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -75,7 +109,7 @@ export function RecipeUploadForm() {
       </CardHeader>
       <CardContent>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form action={formAction} className="space-y-8">
             <FormField
               control={form.control}
               name="title"
@@ -113,7 +147,7 @@ export function RecipeUploadForm() {
                     <FormItem>
                     <FormLabel>Price</FormLabel>
                     <FormControl>
-                        <Input type="number" placeholder="12.99 or 0 if free" {...field} />
+                        <Input type="number" step="0.01" placeholder="12.99 or 0 if free" {...field} />
                     </FormControl>
                     <FormDescription>Enter a price for your dish, or 0 if it's free.</FormDescription>
                     <FormMessage />
@@ -198,11 +232,14 @@ export function RecipeUploadForm() {
                   <FormLabel>Ingredients</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="List each ingredient on a new line. e.g.&#10;500g Pasta&#10;1 can Canned Tomatoes"
+                      placeholder="List each ingredient on a new line. e.g.&#10;1 cup Flour&#10;2 Eggs"
                       rows={5}
                       {...field}
                     />
                   </FormControl>
+                   <FormDescription>
+                    List each ingredient and its quantity on a new line.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -215,34 +252,19 @@ export function RecipeUploadForm() {
                   <FormLabel>Instructions</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Provide step-by-step instructions for preparing your dish."
+                      placeholder="Provide step-by-step instructions. Enter each step on a new line."
                       rows={8}
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Recipe Image</FormLabel>
-                  <FormControl>
-                    <Input type="file" accept="image/*" {...imageRef} />
-                  </FormControl>
                    <FormDescription>
-                    Upload a high-quality photo of your finished dish (max 5MB).
+                    Enter each instruction step on a new line.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit">
-              <Upload className="mr-2 h-4 w-4" /> Submit Recipe
-            </Button>
+            <SubmitButton />
           </form>
         </Form>
       </CardContent>

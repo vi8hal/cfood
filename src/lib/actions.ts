@@ -4,7 +4,7 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
-import { createSession, deleteSession } from '@/lib/auth';
+import { createSession, deleteSession, getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
@@ -200,4 +200,76 @@ export async function signInAction(prevState: any, formData: FormData): Promise<
 export async function signOutAction() {
     await deleteSession();
     revalidatePath('/', 'layout');
+}
+
+
+const RecipeSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters long"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters long"),
+  price: z.coerce.number().min(0, "Price must be a positive number or 0 for free"),
+  location: z.string().min(3, "Location is required"),
+  contact: z.string().min(3, "Contact info is required"),
+  ingredients: z
+    .string()
+    .min(10, "Please list at least one ingredient"),
+  instructions: z
+    .string()
+    .min(20, "Instructions must be at least 20 characters long"),
+  prepTime: z.coerce.number().positive("Prep time must be a positive number"),
+  cookTime: z.coerce.number().positive("Cook time must be a positive number"),
+  servings: z.coerce.number().positive("Servings must be a positive number"),
+});
+
+export async function createRecipeAction(prevState: any, formData: FormData): Promise<FormState> {
+  const session = await getSession();
+  if (!session?.user) {
+    return { status: 'error', message: 'You must be logged in to create a recipe.' };
+  }
+
+  const validatedFields = RecipeSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return {
+      status: 'error',
+      message: 'Invalid form data. Please check the fields and try again.',
+      fieldErrors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  const { title, description, price, location, contact, ingredients, instructions, prepTime, cookTime, servings } = validatedFields.data;
+
+  // Basic text-to-array conversion
+  const ingredientsArray = ingredients.split('\n').filter(line => line.trim() !== '').map(line => {
+    const [quantity, ...itemParts] = line.split(' ');
+    return { quantity: quantity.trim(), item: itemParts.join(' ').trim() };
+  });
+  const instructionsArray = instructions.split('\n').filter(line => line.trim() !== '');
+
+  try {
+    await pool.query(
+      `INSERT INTO "Recipe" (
+        title, description, price, location, contact, ingredients, instructions, 
+        preptime, cooktime, servings, "authorId"
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      [
+        title, description, price, location, contact, JSON.stringify(ingredientsArray), instructionsArray, 
+        prepTime, cookTime, servings, session.user.id
+      ]
+    );
+  } catch (error) {
+    console.error('Failed to create recipe:', error);
+    return {
+      status: 'error',
+      message: 'An unexpected error occurred while saving the recipe.',
+    };
+  }
+
+  revalidatePath('/recipes');
+  revalidatePath('/dashboard');
+  return {
+    status: 'success',
+    message: 'Your recipe has been successfully created!',
+  };
 }
