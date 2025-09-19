@@ -1,9 +1,8 @@
-
 export type Recipe = {
   id: string;
   title: string;
   description: string;
-  ingredients: { item: string; quantity: string }[];
+  ingredients: {item: string; quantity: string}[];
   instructions: string[];
   tags: string[];
   prepTime: number;
@@ -33,7 +32,6 @@ export type Recipe = {
   phone?: string;
 };
 
-
 export type MapLocation = {
   id: string;
   name: string;
@@ -56,9 +54,13 @@ export type User = {
   updatedAt: Date;
 };
 
-
 export type FormState = {
   status: 'success' | 'error';
   message: string;
-  fieldErrors?: Record<string, string[]>;
+  fieldErrors?: Record<string, string[] | undefined>;
 } | null;
+
+export type SessionPayload = {
+  userId: string;
+  expires: string; // ISO 8601 date string
+};

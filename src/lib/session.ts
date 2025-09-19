@@ -5,9 +5,10 @@
 
 'use client';
 
+// This function is deprecated. Use the server-side `getSession` from `lib/auth.ts` instead.
 export async function getClientSession() {
   try {
-    const res = await fetch('/api/session', { cache: 'no-store' });
+    const res = await fetch('/api/session', {cache: 'no-store'});
     if (!res.ok) {
       return null;
     }
