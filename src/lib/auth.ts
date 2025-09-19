@@ -1,4 +1,3 @@
-'use server';
 
 import {SignJWT, jwtVerify} from 'jose';
 import {cookies} from 'next/headers';
@@ -34,7 +33,7 @@ export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
 
-  cookies().set('session', session, {
+  (await cookies()).set('session', session, {
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -42,13 +41,13 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-  cookies().set('session', '', {expires: new Date(0)});
+  (await cookies()).set('session', '', {expires: new Date(0)});
 }
 
 export async function getSession(): Promise<{
   user: User;
 } | null> {
-  const sessionCookie = cookies().get('session')?.value;
+  const sessionCookie = (await cookies()).get('session')?.value;
   if (!sessionCookie) return null;
 
   const sessionPayload = await decrypt(sessionCookie);
