@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed": "node -r ts-node/register --env-file=.env scripts/seed.ts"
+    "seed": "node -r dotenv/config -r ts-node/register scripts/seed.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.15.0",

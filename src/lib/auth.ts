@@ -50,7 +50,7 @@ export async function deleteSession() {
 export async function getSession(): Promise<{
   user: User;
 } | null> {
-  const sessionCookie = cookies().get('session')?.value;
+  const sessionCookie = (await cookies()).get('session')?.value;
   if (!sessionCookie) return null;
 
   const sessionPayload = await decrypt(sessionCookie);
