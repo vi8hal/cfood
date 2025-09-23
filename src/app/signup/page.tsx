@@ -69,10 +69,10 @@ export default function SignupPage() {
   useEffect(() => {
      if (signUpState?.status === 'success') {
       toast({
-        title: 'Registration Initiated',
-        description: signUpState.message,
+        title: 'Sign-Up Successful',
+        description: "Please log in using one of the mock accounts provided.",
       });
-      // The redirect is handled by the server action
+      router.push('/login');
     } else if (signUpState?.status === 'error' && signUpState.message && !signUpState.fieldErrors) {
       toast({
         variant: 'destructive',

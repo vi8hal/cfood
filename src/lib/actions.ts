@@ -3,11 +3,12 @@
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
-import { sendVerificationEmail } from '@/lib/email';
 import { createSession, deleteSession, getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
+import { users as mockUsers } from './placeholder-data';
+import type { User } from './types';
 
 export const RecipeSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters long.'),
@@ -67,123 +68,24 @@ export async function signUpAction(
     };
   }
 
-  const { name, email, password } = validatedFields.data;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const client = await pool.connect();
-  
-  try {
-    await client.query('BEGIN');
-    const userResult = await client.query(
-      `INSERT INTO "User" (name, email, password)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (email) DO NOTHING
-       RETURNING id, email`,
-      [name, email, hashedPassword]
-    );
+  const { email } = validatedFields.data;
 
-    if (userResult.rows.length === 0) {
-       return {
-        status: 'error',
-        message: 'A user with this email already exists.',
-        fieldErrors: { email: ['A user with this email already exists.'] },
-      };
-    }
+  const existingUser = mockUsers.find((user) => user.email === email);
 
-    const user = userResult.rows[0];
-
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    await client.query(
-      'INSERT INTO "OTP" ("userId", code, "expiresAt") VALUES ($1, $2, $3)',
-      [user.id, otpCode, otpExpires]
-    );
-
-    await sendVerificationEmail(email, otpCode);
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error(`Sign-up failed for ${email}:`, error);
+  if (existingUser) {
     return {
       status: 'error',
-      message: 'An unexpected error occurred during sign-up.',
-    };
-  } finally {
-    client.release();
-  }
-
-  redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
-}
-
-const VerifyOtpSchema = z.object({
-  email: z.string().email(),
-  otp: z.string().length(6, { message: 'Your OTP must be 6 digits.' }),
-});
-
-export async function verifyOtpAction(
-  prevState: any,
-  formData: FormData
-): Promise<FormState> {
-  const validatedFields = VerifyOtpSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
-
-  if (!validatedFields.success) {
-    return {
-      status: 'error',
-      message: 'Invalid OTP data.',
-      fieldErrors: validatedFields.error.flatten().fieldErrors,
+      message: 'A user with this email already exists.',
+      fieldErrors: { email: ['A user with this email already exists.'] },
     };
   }
 
-  const { email, otp } = validatedFields.data;
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const userResult = await client.query(
-      'SELECT * FROM "User" WHERE email = $1',
-      [email]
-    );
-    if (userResult.rows.length === 0) {
-      return { status: 'error', message: 'User not found.' };
-    }
-    const user = userResult.rows[0];
-
-    const otpResult = await client.query(
-      'SELECT * FROM "OTP" WHERE "userId" = $1 AND code = $2 AND "expiresAt" > NOW() ORDER BY "createdAt" DESC LIMIT 1',
-      [user.id, otp]
-    );
-
-    if (otpResult.rows.length === 0) {
-      return {
-        status: 'error',
-        message: 'Invalid or expired OTP.',
-        fieldErrors: { otp: ['Invalid or expired OTP. Please try again.'] },
-      };
-    }
-    const otpRecord = otpResult.rows[0];
-
-    await client.query('UPDATE "User" SET "emailVerified" = NOW() WHERE id = $1', [
-      user.id,
-    ]);
-
-    await client.query('DELETE FROM "OTP" WHERE id = $1', [otpRecord.id]);
-
-    await createSession(user.id);
-    await client.query('COMMIT');
-  } catch (error) {
-    await client.query('ROLLBACK');
-    console.error(`OTP verification failed for ${email}:`, error);
-    return {
-      status: 'error',
-      message: 'An unexpected error occurred during OTP verification.',
-    };
-  } finally {
-    client.release();
+  // In a real app, you would create the user. Here, we'll just simulate success
+  // and tell the user to log in with one of the mock accounts.
+  return {
+    status: 'success',
+    message: 'Sign-up successful! Please log in with one of the provided mock accounts.',
   }
-
-  revalidatePath('/dashboard');
-  redirect('/dashboard');
 }
 
 const SignInSchema = z.object({
@@ -210,19 +112,15 @@ export async function signInAction(
   const { email, password } = validatedFields.data;
 
   try {
-    const userResult = await pool.query(
-      'SELECT * FROM "User" WHERE email = $1',
-      [email]
-    );
-
-    if (userResult.rows.length === 0) {
+    const user = mockUsers.find((u) => u.email === email);
+    
+    if (!user) {
       return {
         status: 'error',
         message: 'Invalid credentials. Please try again.',
       };
     }
 
-    const user = userResult.rows[0];
     const passwordsMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordsMatch) {
@@ -230,13 +128,6 @@ export async function signInAction(
         status: 'error',
         message: 'Invalid credentials. Please try again.',
       };
-    }
-
-    if (!user.emailVerified) {
-      console.log(
-        `User ${email} attempted login without verification. Redirecting to OTP.`
-      );
-      redirect(`/verify-otp?email=${encodeURIComponent(email)}&resend=true`);
     }
 
     await createSession(user.id);

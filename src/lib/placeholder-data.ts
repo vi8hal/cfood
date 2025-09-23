@@ -1,72 +1,83 @@
 
+
 export const users = [
   {
+    id: '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
     name: 'Alice Johnson',
     email: 'alice@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=alice@example.com',
     location: 'San Francisco, CA',
   },
   {
+    id: '2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d1a',
     name: 'Bob Williams',
     email: 'bob@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=bob@example.com',
     location: 'Los Angeles, CA',
   },
-    {
+  {
+    id: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d1a2b',
     name: 'Charlie Brown',
     email: 'charlie@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=charlie@example.com',
     location: 'San Diego, CA',
   },
   {
+    id: '4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d1a2b3c',
     name: 'Diana Prince',
     email: 'diana@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=diana@example.com',
     location: 'San Francisco, CA',
   },
   {
+    id: '5e6f7a8b-9c0d-1e2f-3a4b-5c6d1a2b3c4d',
     name: 'Ethan Hunt',
     email: 'ethan@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=ethan@example.com',
     location: 'Los Angeles, CA',
   },
   {
+    id: '6f7a8b9c-0d1e-2f3a-4b5c-6d1a2b3c4d5e',
     name: 'Fiona Glenanne',
     email: 'fiona@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=fiona@example.com',
     location: 'San Diego, CA',
   },
   {
+    id: '7a8b9c0d-1e2f-3a4b-5c6d-1a2b3c4d5e6f',
     name: 'George Costanza',
     email: 'george@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=george@example.com',
     location: 'San Francisco, CA',
   },
   {
+    id: '8b9c0d1e-2f3a-4b5c-6d1a-2b3c4d5e6f7a',
     name: 'Hannah Montana',
     email: 'hannah@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=hannah@example.com',
     location: 'Los Angeles, CA',
   },
   {
+    id: '9c0d1e2f-3a4b-5c6d-1a2b-3c4d5e6f7a8b',
     name: 'Indiana Jones',
     email: 'indy@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=indy@example.com',
     location: 'San Diego, CA',
   },
   {
+    id: '0d1e2f3a-4b5c-6d1a-2b3c-4d5e6f7a8b9c',
     name: 'Jack Sparrow',
     email: 'jack@example.com',
-    password: 'password123',
+    password: '$2a$10$FB/daA.B2BXP.FnC4m9E7.sPGnvmLCI3dC0p3Nq8aHqfGv8T5Xj/O', // password123
     image: 'https://i.pravatar.cc/150?u=jack@example.com',
     location: 'San Francisco, CA',
   },
@@ -97,6 +108,7 @@ export const recipes = [
     cookTime: 15,
     servings: 4,
     authorName: 'Alice Johnson',
+    authorId: '1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d',
     price: 12.99,
   },
   {
@@ -124,6 +136,7 @@ export const recipes = [
     cookTime: 35,
     servings: 8,
     authorName: 'Bob Williams',
+    authorId: '2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d1a',
     price: 22.5,
   },
     {
@@ -149,6 +162,7 @@ export const recipes = [
     cookTime: 5,
     servings: 1,
     authorName: 'Charlie Brown',
+    authorId: '3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d1a2b',
     price: 8.0,
   },
   {
@@ -175,6 +189,7 @@ export const recipes = [
     cookTime: 0,
     servings: 2,
     authorName: 'Diana Prince',
+    authorId: '4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d1a2b3c',
     price: 15.0,
   },
   {
@@ -202,6 +217,7 @@ export const recipes = [
     cookTime: 30,
     servings: 4,
     authorName: 'Ethan Hunt',
+    authorId: '5e6f7a8b-9c0d-1e2f-3a4b-5c6d1a2b3c4d',
     price: 18.75,
   },
   {
@@ -229,6 +245,7 @@ export const recipes = [
     cookTime: 30,
     servings: 6,
     authorName: 'Fiona Glenanne',
+    authorId: '6f7a8b9c-0d1e-2f3a-4b5c-6d1a2b3c4d5e',
     price: 11.25,
   },
   {
@@ -256,6 +273,7 @@ export const recipes = [
     cookTime: 15,
     servings: 6,
     authorName: 'George Costanza',
+    authorId: '7a8b9c0d-1e2f-3a4b-5c6d-1a2b3c4d5e6f',
     price: 14.50,
   },
   {
@@ -284,6 +302,7 @@ export const recipes = [
     cookTime: 30,
     servings: 4,
     authorName: 'Hannah Montana',
+    authorId: '8b9c0d1e-2f3a-4b5c-6d1a-2b3c4d5e6f7a',
     price: 19.99,
   },
   {
@@ -311,6 +330,7 @@ export const recipes = [
     cookTime: 20, // for the rice
     servings: 2,
     authorName: 'Indiana Jones',
+    authorId: '9c0d1e2f-3a4b-5c6d-1a2b-3c4d5e6f7a8b',
     price: 25.00,
   },
   {
@@ -340,6 +360,7 @@ export const recipes = [
     cookTime: 15,
     servings: 4,
     authorName: 'Jack Sparrow',
+    authorId: '0d1e2f3a-4b5c-6d1a-2b3c-4d5e6f7a8b9c',
     price: 9.50,
   },
 ];

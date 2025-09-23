@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSession, updateSession } from '@/lib/auth';
 
 const protectedRoutes = ['/dashboard', '/recipes/new', '/profile'];
-const publicOnlyRoutes = ['/login', '/signup', '/verify-otp'];
+const publicOnlyRoutes = ['/login', '/signup'];
 
 export const runtime = 'nodejs';
 

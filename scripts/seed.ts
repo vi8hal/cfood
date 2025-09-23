@@ -31,15 +31,14 @@ async function seedUsers(client: Pool) {
     // Insert data into the "User" table
     const insertedUsers = await Promise.all(
       users.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 10);
         const result = await client.query(
           `
-          INSERT INTO "User" (name, email, password, image, location, "emailVerified")
-          VALUES ($1, $2, $3, $4, $5, NOW())
+          INSERT INTO "User" (id, name, email, password, image, location, "emailVerified")
+          VALUES ($1, $2, $3, $4, $5, $6, NOW())
           ON CONFLICT (email) DO NOTHING
           RETURNING *;
         `,
-          [user.name, user.email, hashedPassword, user.image, user.location]
+          [user.id, user.name, user.email, user.password, user.image, user.location]
         );
         return result.rows[0];
       }),
@@ -128,37 +127,18 @@ async function seedRecipes(client: Pool) {
     }
 }
 
-async function seedOtps(client: Pool) {
-    try {
-        await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS "OTP" (
-                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-                "userId" UUID NOT NULL REFERENCES "User"(id),
-                code VARCHAR(6) NOT NULL,
-                "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-                "expiresAt" TIMESTAMPTZ NOT NULL
-            );
-        `);
-        console.log(`Created "OTP" table`);
-    } catch(error) {
-        console.error('Error creating OTP table:', error);
-        throw error;
-    }
-}
-
 
 async function main() {
   const client = await pool.connect();
 
   try {
     // Note: Order of execution matters due to foreign key constraints
+    await client.query('DROP TABLE IF EXISTS "Recipe" CASCADE;');
     await client.query('DROP TABLE IF EXISTS "User" CASCADE;');
     console.log('Finished dropping tables.');
 
     await seedUsers(pool);
     await seedRecipes(pool);
-    await seedOtps(pool);
 
   } catch (error) {
     console.error(
