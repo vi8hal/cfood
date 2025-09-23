@@ -8,58 +8,8 @@ import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
 import { users as mockUsers } from './placeholder-data';
-import type { User } from './types';
 import { RecipeSchema } from './schemas';
 
-const SignUpSchema = z
-  .object({
-    name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-    email: z.string().email({ message: 'Please enter a valid email.' }),
-    password: z
-      .string()
-      .min(8, { message: 'Password must be at least 8 characters.' }),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match.",
-    path: ['confirmPassword'],
-  });
-
-export async function signUpAction(
-  prevState: any,
-  formData: FormData
-): Promise<FormState> {
-  const validatedFields = SignUpSchema.safeParse(
-    Object.fromEntries(formData.entries())
-  );
-
-  if (!validatedFields.success) {
-    return {
-      status: 'error',
-      message: 'Invalid form data. Please check the fields and try again.',
-      fieldErrors: validatedFields.error.flatten().fieldErrors,
-    };
-  }
-
-  const { email } = validatedFields.data;
-
-  const existingUser = mockUsers.find((user) => user.email === email);
-
-  if (existingUser) {
-    return {
-      status: 'error',
-      message: 'A user with this email already exists.',
-      fieldErrors: { email: ['A user with this email already exists.'] },
-    };
-  }
-
-  // In a real app, you would create the user. Here, we'll just simulate success
-  // and tell the user to log in with one of the mock accounts.
-  return {
-    status: 'success',
-    message: 'Sign-up successful! Please log in with one of the provided mock accounts.',
-  }
-}
 
 const SignInSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -163,9 +113,13 @@ export async function createRecipeAction(
     .split('\n')
     .filter((line) => line.trim() !== '')
     .map((line) => {
-      const parts = line.trim().split(' ');
-      const quantity = parts[0] || '';
-      const item = parts.slice(1).join(' ').trim();
+      // Split on the first space to separate quantity from item
+      const firstSpaceIndex = line.trim().indexOf(' ');
+      if (firstSpaceIndex === -1) {
+        return { quantity: '', item: line.trim() };
+      }
+      const quantity = line.trim().substring(0, firstSpaceIndex);
+      const item = line.trim().substring(firstSpaceIndex + 1);
       return { quantity, item };
     });
 

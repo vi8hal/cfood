@@ -2,7 +2,6 @@ require('dotenv').config({ path: '.env.local' });
 
 import { Pool } from 'pg';
 import { users, recipes as placeholderRecipes } from '../src/lib/placeholder-data';
-import bcrypt from 'bcryptjs';
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
@@ -127,24 +126,6 @@ async function seedRecipes(client: Pool) {
     }
 }
 
-async function seedOtps(client: Pool) {
-  try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS "OTP" (
-        id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-        "userId" UUID NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
-        code VARCHAR(6) NOT NULL,
-        "expiresAt" TIMESTAMPTZ NOT NULL,
-        "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-    console.log(`Created "OTP" table`);
-  } catch (error) {
-    console.error('Error seeding OTPs:', error);
-    throw error;
-  }
-}
-
 
 async function main() {
   const client = await pool.connect();
@@ -152,13 +133,11 @@ async function main() {
   try {
     // Note: Order of execution matters due to foreign key constraints
     await client.query('DROP TABLE IF EXISTS "Recipe" CASCADE;');
-    await client.query('DROP TABLE IF EXISTS "OTP" CASCADE;');
     await client.query('DROP TABLE IF EXISTS "User" CASCADE;');
     console.log('Finished dropping tables.');
 
     await seedUsers(pool);
     await seedRecipes(pool);
-    await seedOtps(pool);
 
   } catch (error) {
     console.error(

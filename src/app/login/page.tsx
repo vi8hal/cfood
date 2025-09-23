@@ -17,8 +17,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -55,7 +56,7 @@ export default function LoginPage() {
   }, [state, toast, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-secondary/50">
+    <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
       <Card className="w-full max-w-md">
         <form action={formAction}>
           <CardHeader className="text-center">
@@ -70,6 +71,13 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+             <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Demo Accounts</AlertTitle>
+              <AlertDescription>
+                Use any email from our mock users (e.g., <code className="font-mono bg-muted px-1 py-0.5 rounded">alice@example.com</code>) with the password <code className="font-mono bg-muted px-1 py-0.5 rounded">password123</code>.
+              </AlertDescription>
+            </Alert>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -78,21 +86,19 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                defaultValue="alice@example.com"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required />
+              <Input id="password" name="password" type="password" required defaultValue="password123" />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <SubmitButton />
-            <p className="text-xs text-center text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/signup" className="underline hover:text-primary">
-                Sign up
-              </Link>
-            </p>
+             {state?.status === 'error' && (
+                <p className="text-sm text-destructive text-center">{state.message}</p>
+            )}
           </CardFooter>
         </form>
       </Card>
