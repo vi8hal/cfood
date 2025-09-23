@@ -260,12 +260,7 @@ export async function createRecipeAction(
   }
 
   revalidatePath('/recipes');
-<<<<<<< HEAD
-  revalidatePath('/dashboard');
-  return { status: 'success', message: 'Your recipe has been successfully submitted and is now live!' };
-=======
   redirect('/recipes');
->>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 }
 
 import { getSession } from '@/lib/auth';
