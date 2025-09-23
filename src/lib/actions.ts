@@ -6,7 +6,7 @@ import { pool } from './db';
 import { sendVerificationEmail } from '@/lib/email';
 import { createSession, deleteSession, getSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import type { FormState, RecipeFormValues } from './types';
+import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
 
 export const RecipeSchema = z.object({
@@ -183,10 +183,7 @@ export async function verifyOtpAction(
   }
 
   revalidatePath('/dashboard');
-  return {
-    status: 'success',
-    message: 'Your account has been successfully verified!',
-  };
+  redirect('/dashboard');
 }
 
 const SignInSchema = z.object({
@@ -252,10 +249,7 @@ export async function signInAction(
   }
 
   revalidatePath('/dashboard');
-  return {
-    status: 'success',
-    message: 'Welcome back!',
-  };
+  redirect('/dashboard');
 }
 
 export async function signOutAction() {
@@ -345,9 +339,5 @@ export async function createRecipeAction(
 
   revalidatePath('/recipes');
   revalidatePath('/dashboard');
-  return {
-    status: 'success',
-    message:
-      'Your recipe has been successfully created and shared with the community!',
-  };
+  redirect('/recipes');
 }

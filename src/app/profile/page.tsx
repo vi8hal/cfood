@@ -46,7 +46,7 @@ export default async function ProfilePage() {
       <Card className="max-w-2xl mx-auto">
         <CardHeader className="text-center">
           <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-primary">
-            <AvatarImage src={user.image || `https://i.pravatar.cc/150?u=${user.email}`} alt={user.name || ''} />
+            <AvatarImage src={user.image || undefined} alt={user.name || ''} />
             <AvatarFallback className="text-4xl">{(user.name || 'U').charAt(0)}</AvatarFallback>
           </Avatar>
           <CardTitle className="text-3xl font-headline">{user.name}</CardTitle>

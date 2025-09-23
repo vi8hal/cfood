@@ -1,4 +1,3 @@
-
 import type { Recipe as RecipeType } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -19,6 +18,7 @@ import { RecipeDetails } from '@/components/recipe-details';
 import { NutritionFacts } from '@/components/nutrition-facts';
 import SaveRecipeButton from '@/components/save-recipe-button';
 import { pool } from '@/lib/db';
+import { dummyOrders } from '@/lib/data';
 
 async function getRecipe(id: string): Promise<RecipeType | null> {
   try {
@@ -81,7 +81,6 @@ async function getRecipe(id: string): Promise<RecipeType | null> {
         location: dbRecipe.location,
         // Mocked data for fields not in DB
         nutrition: { calories: 450, protein: 15, fat: 10, carbs: 75 },
-        phone: '123-456-7890',
     };
 
     return recipe;
@@ -100,17 +99,12 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   }
   
   // Use a consistent placeholder based on recipe ID to avoid layout shifts
-  const recipeImageSeed = parseInt(recipe.id, 16) % 1000;
+  const recipeImageSeed = parseInt(recipe.id.substring(0, 8), 16) % 1000;
   const recipeImage = { 
     src: `https://picsum.photos/seed/${recipeImageSeed}/600/400`,
     alt: `Image for ${recipe.title}`,
     hint: 'food plate' 
   };
-  
-  const { dummyOrders } = { dummyOrders: [
-    { id: 'ORD001', user: 'Bob Johnson', timestamp: '2024-05-20 10:30 AM' },
-    { id: 'ORD002', user: 'Charlie Brown', timestamp: '2024-05-20 11:15 AM' },
-  ]};
 
   return (
     <div className="container mx-auto px-4 py-8 print-container">
@@ -224,10 +218,10 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
                   <a href={`mailto:${recipe.author.email}`} className='font-medium hover:underline'>{recipe.author.email}</a>
                 </div>
               )}
-              {recipe.phone && (
+              {recipe.contact && (
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-2" />
-                  <span className='font-medium'>{recipe.phone}</span>
+                  <span className='font-medium'>{recipe.contact}</span>
                 </div>
               )}
             </CardContent>

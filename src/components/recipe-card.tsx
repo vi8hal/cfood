@@ -12,7 +12,7 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe }: RecipeCardProps) {
   // Use a consistent placeholder based on recipe ID to avoid layout shifts
-  const recipeImageSeed = parseInt(recipe.id, 16) % 1000;
+  const recipeImageSeed = parseInt(recipe.id.substring(0, 8), 16) % 1000;
   const recipeImage = { 
     src: `https://picsum.photos/seed/${recipeImageSeed}/600/400`,
     alt: `Image for ${recipe.title}`,
@@ -38,7 +38,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         </CardHeader>
         <CardContent className="p-4 flex-grow">
           <div className="flex space-x-2 mb-2">
-            {recipe.tags.slice(0, 2).map((tag: string) => (
+            {(recipe.tags || []).slice(0, 2).map((tag: string) => (
               <Badge key={tag} variant="secondary" className="font-normal">
                 {tag}
               </Badge>
@@ -51,7 +51,7 @@ export function RecipeCard({ recipe }: RecipeCardProps) {
         <CardFooter className="p-4 flex justify-between items-center text-sm text-muted-foreground">
           <div className="flex items-center">
             <Avatar className="h-6 w-6 mr-2">
-              <AvatarImage src={recipe.authorImage} alt={recipe.author.name || ''} />
+              <AvatarImage src={recipe.authorImage || undefined} alt={recipe.author.name || ''} />
               <AvatarFallback>{(recipe.author.name || 'U').charAt(0)}</AvatarFallback>
             </Avatar>
             <span>{recipe.author.name}</span>

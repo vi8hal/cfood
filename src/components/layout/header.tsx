@@ -41,7 +41,9 @@ import {cn} from '@/lib/utils';
 import {Input} from '../ui/input';
 import {useEffect, useState} from 'react';
 import {signOutAction} from '@/lib/actions';
-import {getClientSession} from '@/lib/session';
+import { getSession } from '@/lib/auth';
+import type { User as UserType } from '@/lib/types';
+
 
 const navLinks = [
   {href: '/recipes', label: 'Recipes', icon: ChefHat},
@@ -53,17 +55,19 @@ const authenticatedNavLinks = [
   {href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard},
 ];
 
+type Session = { user: UserType } | null;
+
 export function AppHeader() {
   const pathname = usePathname();
-  // Using `any` for session to avoid circular dependency issues with types
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const sessionData = await getClientSession();
-        setSession(sessionData);
+        // This is a server function, but we can call it in a client component's useEffect
+        const sessionData = await getSession();
+        setSession(sessionData as Session);
       } catch (error) {
         console.error('Session check failed', error);
         setSession(null);
@@ -208,7 +212,7 @@ export function AppHeader() {
                     <Avatar>
                       <AvatarImage
                         src={
-                          session.user.image || 'https://i.pravatar.cc/150'
+                          session.user.image || undefined
                         }
                         alt="User avatar"
                       />

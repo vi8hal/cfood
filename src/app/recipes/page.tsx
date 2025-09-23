@@ -38,6 +38,7 @@ async function getRecipes(): Promise<Recipe[]> {
         location: dbRecipe.authorLocation,
       },
       authorImage: dbRecipe.authorImage,
+      location: dbRecipe.location,
     }));
   } catch (error) {
     console.error('An error occurred while fetching recipes:', error);

@@ -1,4 +1,3 @@
-
 require('dotenv').config({ path: '.env.local' });
 
 import { Pool } from 'pg';
@@ -154,8 +153,6 @@ async function main() {
 
   try {
     // Note: Order of execution matters due to foreign key constraints
-    await client.query('DROP TABLE IF EXISTS "Recipe";');
-    await client.query('DROP TABLE IF EXISTS "OTP";');
     await client.query('DROP TABLE IF EXISTS "User" CASCADE;');
     console.log('Finished dropping tables.');
 
