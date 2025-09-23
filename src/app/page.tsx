@@ -33,7 +33,7 @@ export default function LandingPage() {
                 <Link href="/recipes">Explore Recipes</Link>
               </Button>
               <Button asChild size="lg" variant="secondary">
-                <Link href="/login">Join the Community</Link>
+                <Link href="/signup">Join the Community</Link>
               </Button>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default function LandingPage() {
               Join Culinary Hub today to start exploring thousands of recipes and share your own creations with a community that shares your passion.
             </p>
             <Button asChild size="lg">
-              <Link href="/recipes/new">Add Your First Recipe</Link>
+              <Link href="/signup">Add Your First Recipe</Link>
             </Button>
           </div>
         </section>

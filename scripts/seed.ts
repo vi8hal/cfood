@@ -1,7 +1,8 @@
 require('dotenv').config({ path: '.env.local' });
 
 import { Pool } from 'pg';
-import { users, recipes as placeholderRecipes } from '../src/lib/placeholder-data';
+import { users as placeholderUsers, recipes as placeholderRecipes } from '../src/lib/placeholder-data';
+import bcrypt from 'bcryptjs';
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
@@ -10,7 +11,6 @@ const pool = new Pool({
 async function seedUsers(client: Pool) {
   try {
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-    // Create the "User" table if it doesn't exist
     await client.query(`
       CREATE TABLE IF NOT EXISTS "User" (
         id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -26,25 +26,29 @@ async function seedUsers(client: Pool) {
     `);
 
     console.log(`Created "User" table`);
+    
+    // Check if users table is empty before seeding
+    const userCount = await client.query('SELECT COUNT(*) FROM "User"');
+    if (parseInt(userCount.rows[0].count, 10) > 0) {
+        console.log('Users table is not empty. Skipping seeding users.');
+        return;
+    }
 
-    // Insert data into the "User" table
     const insertedUsers = await Promise.all(
-      users.map(async (user) => {
-        const result = await client.query(
+      placeholderUsers.map(async (user) => {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        return client.query(
           `
           INSERT INTO "User" (id, name, email, password, image, location, "emailVerified")
           VALUES ($1, $2, $3, $4, $5, $6, NOW())
-          ON CONFLICT (email) DO NOTHING
-          RETURNING *;
+          ON CONFLICT (email) DO NOTHING;
         `,
-          [user.id, user.name, user.email, user.password, user.image, user.location]
+          [user.id, user.name, user.email, hashedPassword, user.image, user.location]
         );
-        return result.rows[0];
       }),
     );
 
-    console.log(`Seeded ${insertedUsers.filter(Boolean).length} users`);
-    return insertedUsers;
+    console.log(`Seeded ${insertedUsers.length} users`);
   } catch (error) {
     console.error('Error seeding users:', error);
     throw error;
@@ -55,7 +59,6 @@ async function seedRecipes(client: Pool) {
     try {
       await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
   
-      // Create the "Recipe" table if it doesn't exist
       await client.query(`
         CREATE TABLE IF NOT EXISTS "Recipe" (
           id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -68,7 +71,7 @@ async function seedRecipes(client: Pool) {
           "cookTime" INTEGER,
           servings INTEGER,
           price NUMERIC(10, 2),
-          "authorId" UUID NOT NULL REFERENCES "User"(id),
+          "authorId" UUID NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
           "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
           "updatedAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
           location VARCHAR(255),
@@ -78,7 +81,12 @@ async function seedRecipes(client: Pool) {
   
       console.log(`Created "Recipe" table`);
   
-      // Get users to associate recipes with
+      const recipeCount = await client.query('SELECT COUNT(*) FROM "Recipe"');
+      if (parseInt(recipeCount.rows[0].count, 10) > 0) {
+          console.log('Recipes table is not empty. Skipping seeding recipes.');
+          return;
+      }
+
       const usersResult = await client.query('SELECT * from "User"');
       const dbUsers = usersResult.rows;
 
@@ -87,7 +95,6 @@ async function seedRecipes(client: Pool) {
         return;
       }
   
-      // Insert data into the "Recipe" table
       const insertedRecipes = await Promise.all(
         placeholderRecipes.map(async (recipe) => {
           const author = dbUsers.find(u => u.name === recipe.authorName);
@@ -113,7 +120,7 @@ async function seedRecipes(client: Pool) {
               recipe.servings,
               recipe.price,
               author.id,
-              author.location, // Use author's location as recipe location
+              author.location,
             ]
           );
         }),
@@ -126,19 +133,31 @@ async function seedRecipes(client: Pool) {
     }
 }
 
+async function seedOtps(client: Pool) {
+    try {
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS "OTP" (
+                id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+                code VARCHAR(6) NOT NULL,
+                "userId" UUID NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
+                expires TIMESTAMPTZ NOT NULL,
+                "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log(`Created "OTP" table`);
+    } catch (error) {
+        console.error('Error creating OTP table:', error);
+        throw error;
+    }
+}
 
 async function main() {
   const client = await pool.connect();
 
   try {
-    // Note: Order of execution matters due to foreign key constraints
-    await client.query('DROP TABLE IF EXISTS "Recipe" CASCADE;');
-    await client.query('DROP TABLE IF EXISTS "User" CASCADE;');
-    console.log('Finished dropping tables.');
-
     await seedUsers(pool);
     await seedRecipes(pool);
-
+    await seedOtps(pool);
   } catch (error) {
     console.error(
       'An error occurred while attempting to seed the database:',

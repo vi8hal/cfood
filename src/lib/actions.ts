@@ -9,11 +9,18 @@ import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
 import { users as mockUsers } from './placeholder-data';
 import { RecipeSchema } from './schemas';
-
+import crypto from 'crypto';
+import { sendVerificationEmail } from './email';
 
 const SignInSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
+});
+
+const SignUpSchema = z.object({
+    name: z.string().min(2, 'Name must be at least 2 characters.'),
+    email: z.string().email('Please enter a valid email.'),
+    password: z.string().min(8, 'Password must be at least 8 characters long.'),
 });
 
 export async function signInAction(
@@ -35,18 +42,25 @@ export async function signInAction(
   const { email, password } = validatedFields.data;
 
   try {
-    const user = mockUsers.find((u) => u.email === email);
-    
-    if (!user) {
-      return {
-        status: 'error',
-        message: 'Invalid credentials. Please try again.',
-      };
+    // First, try to find user in the database
+    const dbResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    let user = dbResult.rows[0];
+    let passwordMatch = false;
+
+    if (user) {
+        // If user found in DB, compare password hash
+        passwordMatch = await bcrypt.compare(password, user.password);
+    } else {
+        // If not in DB, check mock users
+        const mockUser = mockUsers.find((u) => u.email === email);
+        if (mockUser) {
+            user = mockUser;
+            // Compare with mock user's hashed password
+            passwordMatch = await bcrypt.compare(password, mockUser.password);
+        }
     }
 
-    const passwordsMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordsMatch) {
+    if (!user || !passwordMatch) {
       return {
         status: 'error',
         message: 'Invalid credentials. Please try again.',
@@ -70,6 +84,101 @@ export async function signOutAction() {
   await deleteSession();
   revalidatePath('/', 'layout');
 }
+
+export async function signUpAction(
+  prevState: any,
+  formData: FormData
+): Promise<FormState> {
+  const validatedFields = SignUpSchema.safeParse(Object.fromEntries(formData.entries()));
+
+  if (!validatedFields.success) {
+    return {
+      status: 'error',
+      message: 'Invalid form data.',
+      fieldErrors: validatedFields.error.flatten().fieldErrors,
+    };
+  }
+
+  const { name, email, password } = validatedFields.data;
+
+  try {
+    const existingUser = await pool.query('SELECT id FROM "User" WHERE email = $1', [email]);
+    if (existingUser.rows.length > 0) {
+      return { status: 'error', message: 'A user with this email already exists.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newUserResult = await pool.query(
+      `INSERT INTO "User" (name, email, password) VALUES ($1, $2, $3) RETURNING id`,
+      [name, email, hashedPassword]
+    );
+    const userId = newUserResult.rows[0].id;
+    
+    // Generate OTP
+    const otp = crypto.randomInt(100000, 999999).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await pool.query(
+        `INSERT INTO "OTP" (code, "userId", expires) VALUES ($1, $2, $3)`,
+        [otp, userId, otpExpires]
+    );
+    
+    // Send OTP email
+    await sendVerificationEmail(email, otp);
+
+  } catch (error) {
+    console.error('Sign-up error:', error);
+    return { status: 'error', message: 'An error occurred during sign-up.' };
+  }
+
+  redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
+}
+
+export async function verifyOtpAction(prevState: any, formData: FormData): Promise<FormState> {
+    const email = formData.get('email') as string;
+    const otp = formData.get('otp') as string;
+
+    if (!email || !otp) {
+        return { status: 'error', message: 'Email and OTP are required.' };
+    }
+
+    try {
+        const userResult = await pool.query('SELECT id FROM "User" WHERE email = $1', [email]);
+        if (userResult.rows.length === 0) {
+            return { status: 'error', message: 'User not found.' };
+        }
+        const userId = userResult.rows[0].id;
+
+        const otpResult = await pool.query(
+            'SELECT * FROM "OTP" WHERE "userId" = $1 AND code = $2 AND expires > NOW() ORDER BY "createdAt" DESC LIMIT 1',
+            [userId, otp]
+        );
+
+        if (otpResult.rows.length === 0) {
+            return { status: 'error', message: 'Invalid or expired OTP.' };
+        }
+        
+        const otpRecord = otpResult.rows[0];
+
+        // Mark user as verified
+        await pool.query('UPDATE "User" SET "emailVerified" = NOW() WHERE id = $1', [userId]);
+
+        // Delete the used OTP
+        await pool.query('DELETE FROM "OTP" WHERE id = $1', [otpRecord.id]);
+
+        // Create session for the user
+        await createSession(userId);
+
+    } catch (error) {
+        console.error('OTP verification error:', error);
+        return { status: 'error', message: 'An unexpected error occurred.' };
+    }
+    
+    revalidatePath('/dashboard');
+    redirect('/dashboard');
+}
+
 
 export async function createRecipeAction(
   prevState: any,

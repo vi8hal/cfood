@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { signInAction } from '@/lib/actions';
+import { signUpAction } from '@/lib/actions';
 import type { FormState } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -19,38 +19,30 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
       {pending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-      Sign In
+      Create Account
     </Button>
   );
 }
 
-export default function LoginPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const [state, formAction] = useActionState<FormState, FormData>(
-    signInAction,
+    signUpAction,
     null
   );
   const { toast } = useToast();
 
   useEffect(() => {
-    if (state?.status === 'success') {
-      toast({
-        title: 'Sign-In Successful',
-        description: state.message,
-      });
-      router.push('/dashboard');
-    } else if (state?.status === 'error' && state.message) {
+    if (state?.status === 'error' && state.message) {
       toast({
         variant: 'destructive',
-        title: 'Sign-In Failed',
+        title: 'Sign-Up Failed',
         description: state.message,
       });
     }
@@ -65,20 +57,23 @@ export default function LoginPage() {
               <UtensilsCrossed className="h-10 w-10 text-primary" />
             </div>
             <CardTitle className="font-headline text-3xl">
-              Welcome Back
+              Create an Account
             </CardTitle>
             <CardDescription>
-              Enter your credentials to access your account.
+              Join the Culinary Hub community.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>Demo Accounts</AlertTitle>
-              <AlertDescription>
-                Use any email from our mock users (e.g., <code className="font-mono bg-muted px-1 py-0.5 rounded">alice@example.com</code>) with the password <code className="font-mono bg-muted px-1 py-0.5 rounded">password123</code>.
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="John Doe"
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -87,24 +82,23 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
-                defaultValue="alice@example.com"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required defaultValue="password123" />
+              <Input id="password" name="password" type="password" required />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <SubmitButton />
-             {state?.status === 'error' && state.message && (
+            {state?.status === 'error' && state.message && (
                 <p className="text-sm text-destructive text-center">{state.message}</p>
             )}
-             <p className="text-center text-sm text-muted-foreground">
-                Don&apos;t have an account?{' '}
-                <Link href="/signup" className="underline hover:text-primary">
-                    Sign up
-                </Link>
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{' '}
+              <Link href="/login" className="underline hover:text-primary">
+                Sign in
+              </Link>
             </p>
           </CardFooter>
         </form>

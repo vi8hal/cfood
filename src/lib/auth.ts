@@ -3,7 +3,7 @@ import {SignJWT, jwtVerify} from 'jose';
 import {cookies} from 'next/headers';
 import {NextRequest, NextResponse} from 'next/server';
 import type {SessionPayload, User} from '@/lib/types';
-import { users as mockUsers } from './placeholder-data';
+import {pool} from './db';
 
 const secretKey = process.env.JWT_SECRET;
 const key = new TextEncoder().encode(secretKey!);
@@ -32,8 +32,8 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
 export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
-
-  cookies().set('session', session, {
+  const cookieStore = cookies();
+  cookieStore.set('session', session, {
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -41,13 +41,15 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-  cookies().set('session', '', {expires: new Date(0)});
+  const cookieStore = cookies();
+  cookieStore.set('session', '', {expires: new Date(0)});
 }
 
 export async function getSession(): Promise<{
   user: User;
 } | null> {
-  const sessionCookie = cookies().get('session')?.value;
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('session')?.value;
   if (!sessionCookie) return null;
 
   const sessionPayload = await decrypt(sessionCookie);
@@ -56,7 +58,10 @@ export async function getSession(): Promise<{
   }
 
   try {
-    const user = mockUsers.find(u => u.id === sessionPayload.userId);
+    const result = await pool.query('SELECT * FROM "User" WHERE id = $1', [
+      sessionPayload.userId,
+    ]);
+    const user = result.rows[0];
 
     if (!user) {
       return null;
@@ -65,11 +70,18 @@ export async function getSession(): Promise<{
     // Omit password from the user object returned to the app
     const { password, ...userWithoutPassword } = user;
 
-    return {user: {
-      ...userWithoutPassword,
-      createdAt: new Date(), // Mocked
-      updatedAt: new Date(), // Mocked
-    }};
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        location: user.location,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdat,
+        updatedAt: user.updatedat,
+      },
+    };
   } catch (error) {
     console.error('Failed to fetch user for session:', error);
     return null;
