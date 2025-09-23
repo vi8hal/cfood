@@ -4,6 +4,8 @@ import {cookies} from 'next/headers';
 import {NextRequest, NextResponse} from 'next/server';
 import type {SessionPayload, User} from '@/lib/types';
 import {pool} from './db';
+import { users as mockUsers } from './placeholder-data';
+
 
 const secretKey = process.env.JWT_SECRET;
 const key = new TextEncoder().encode(secretKey!);
@@ -32,7 +34,7 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
 export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('session', session, {
     expires,
     httpOnly: true,
@@ -41,14 +43,14 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('session', '', {expires: new Date(0)});
 }
 
 export async function getSession(): Promise<{
   user: User;
 } | null> {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session')?.value;
   if (!sessionCookie) return null;
 
@@ -58,10 +60,24 @@ export async function getSession(): Promise<{
   }
 
   try {
+    // First, check the database for a real user
     const result = await pool.query('SELECT * FROM "User" WHERE id = $1', [
       sessionPayload.userId,
     ]);
-    const user = result.rows[0];
+    let user = result.rows[0];
+
+    // If no user is found in the database, check the mock users
+    if (!user) {
+        const mockUser = mockUsers.find(u => u.id === sessionPayload.userId);
+        if (mockUser) {
+            user = {
+                ...mockUser,
+                createdat: new Date(), // Mock date
+                updatedat: new Date(), // Mock date
+                emailVerified: new Date(), // Mock as verified
+            }
+        }
+    }
 
     if (!user) {
       return null;

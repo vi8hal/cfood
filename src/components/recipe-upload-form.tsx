@@ -22,6 +22,7 @@ import { createRecipeAction } from "@/lib/actions";
 import { RecipeSchema } from "@/lib/schemas";
 import type { FormState, RecipeFormValues } from "@/lib/types";
 import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,6 +36,7 @@ function SubmitButton() {
 
 export function RecipeUploadForm() {
   const { toast } = useToast();
+  const router = useRouter();
   const [state, formAction] = useActionState<FormState, FormData>(createRecipeAction, null);
   
   const form = useForm<RecipeFormValues>({
@@ -60,6 +62,8 @@ export function RecipeUploadForm() {
         description: state.message,
       });
       form.reset();
+      // Redirect to the recipes page on successful submission
+      router.push('/recipes');
     } else if (state?.status === 'error' && state.message && !state.fieldErrors) {
       toast({
         variant: 'destructive',
@@ -67,7 +71,7 @@ export function RecipeUploadForm() {
         description: state.message,
       });
     }
-  }, [state, form, toast]);
+  }, [state, form, toast, router]);
 
 
   // Set form errors from server action

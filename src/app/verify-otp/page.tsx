@@ -102,6 +102,7 @@ function VerifyOtpForm() {
           <SubmitButton />
           {state?.status === 'error' && state.message && (
             <p className="text-sm text-destructive text-center">{state.message}</p>
+
           )}
         </CardFooter>
       </form>

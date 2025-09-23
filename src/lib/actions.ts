@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { pool } from './db';
-import { createSession, deleteSession, getSession } from '@/lib/auth';
+import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
@@ -86,7 +86,7 @@ export async function signInAction(
   }
 
   revalidatePath('/dashboard');
-  redirect('/dashboard');
+  return { status: 'success', message: 'Sign-in successful!' };
 }
 
 export async function signOutAction() {
@@ -190,7 +190,7 @@ export async function verifyOtpAction(prevState: any, formData: FormData): Promi
     }
     
     revalidatePath('/dashboard');
-    redirect('/dashboard');
+    return { status: 'success', message: 'Account verified successfully!' };
 }
 
 
@@ -280,5 +280,7 @@ export async function createRecipeAction(
 
   revalidatePath('/recipes');
   revalidatePath('/dashboard');
-  redirect('/recipes');
+  return { status: 'success', message: 'Your recipe has been successfully submitted and is now live!' };
 }
+
+import { getSession } from '@/lib/auth';
