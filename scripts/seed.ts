@@ -1,15 +1,8 @@
-<<<<<<< HEAD
-require('dotenv').config({ path: '.env' });
-
-import { Pool } from 'pg';
-=======
 
 require('dotenv').config({ path: '.env' });
 
 import { Pool } from 'pg';
 import { recipes as placeholderRecipes, users as placeholderUsers } from '../src/lib/placeholder-data';
-import bcrypt from 'bcryptjs';
->>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
@@ -18,8 +11,6 @@ const pool = new Pool({
 async function setupTables(client: Pool) {
   try {
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-<<<<<<< HEAD
-=======
     // Drop tables with CASCADE to handle dependencies
     await client.query(`DROP TABLE IF EXISTS "Recipe" CASCADE;`);
     console.log('Dropped "Recipe" table.');
@@ -28,8 +19,6 @@ async function setupTables(client: Pool) {
     await client.query(`DROP TABLE IF EXISTS "OTP" CASCADE;`);
     console.log('Dropped "OTP" table.');
 
-
->>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
     // Create User table
     const userTableCreateQuery = `
       CREATE TABLE IF NOT EXISTS "User" (
@@ -89,8 +78,6 @@ async function setupTables(client: Pool) {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function seedUsers(client: Pool) {
   try {
     const userCount = await client.query('SELECT COUNT(*) FROM "User"');
@@ -174,20 +161,14 @@ async function seedRecipes(client: Pool) {
     }
 }
 
-
->>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 async function main() {
   const client = await pool.connect();
 
   try {
     await setupTables(pool);
-<<<<<<< HEAD
-    console.log("Database table setup completed successfully.");
-=======
     await seedUsers(pool);
     await seedRecipes(pool);
     console.log("Database seeded successfully.");
->>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 
   } catch (error) {
     console.error(
