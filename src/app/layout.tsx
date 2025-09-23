@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { AppHeader } from '@/components/layout/header';
 import { AppFooter } from '@/components/layout/footer';
 import { PT_Sans } from 'next/font/google';
+import { getSession } from '@/lib/auth';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -17,11 +18,13 @@ export const metadata: Metadata = {
   description: 'A community-driven site for sharing recipes and meal planning.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await getSession();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
@@ -32,7 +35,7 @@ export default function RootLayout({
         )}
       >
         <div className="relative flex min-h-screen flex-col">
-          <AppHeader />
+          <AppHeader session={session} />
           <main className="flex-1">{children}</main>
           <AppFooter />
         </div>

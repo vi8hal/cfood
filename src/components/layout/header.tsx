@@ -39,9 +39,7 @@ import {Avatar, AvatarFallback, AvatarImage} from '../ui/avatar';
 import {usePathname} from 'next/navigation';
 import {cn} from '@/lib/utils';
 import {Input} from '../ui/input';
-import {useEffect, useState} from 'react';
 import {signOutAction} from '@/lib/actions';
-import { getSession } from '@/lib/auth';
 import type { User as UserType } from '@/lib/types';
 
 
@@ -57,26 +55,8 @@ const authenticatedNavLinks = [
 
 type Session = { user: UserType } | null;
 
-export function AppHeader() {
+export function AppHeader({ session }: { session: Session }) {
   const pathname = usePathname();
-  const [session, setSession] = useState<Session>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        // This is a server function, but we can call it in a client component's useEffect
-        const sessionData = await getSession();
-        setSession(sessionData as Session);
-      } catch (error) {
-        console.error('Session check failed', error);
-        setSession(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkSession();
-  }, [pathname]); // Re-check session on path change
 
   const allNavLinks = session?.user
     ? [...navLinks, ...authenticatedNavLinks]
@@ -179,9 +159,7 @@ export function AppHeader() {
               className="w-full pl-10"
             />
           </div>
-          {isLoading ? (
-            <div className="h-10 w-28 animate-pulse rounded-md bg-muted" />
-          ) : session?.user ? (
+          {session?.user ? (
             <div className="flex items-center gap-4">
               <Popover>
                 <PopoverTrigger asChild>
