@@ -90,7 +90,7 @@ export async function getSession(): Promise<{
           user: {
             id: userWithoutPassword.id,
             name: userWithoutPassword.name,
-            email: userWithoutowned.email,
+            email: userWithoutPassword.email,
             image: userWithoutPassword.image,
             location: userWithoutPassword.location,
             // Mock users are considered verified
