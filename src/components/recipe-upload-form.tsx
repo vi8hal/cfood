@@ -18,7 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LoaderCircle, Upload } from "lucide-react";
-import { createRecipeAction, RecipeSchema } from "@/lib/actions";
+import { createRecipeAction } from "@/lib/actions";
+import { RecipeSchema } from "@/lib/schemas";
 import type { FormState, RecipeFormValues } from "@/lib/types";
 import { useFormStatus } from "react-dom";
 

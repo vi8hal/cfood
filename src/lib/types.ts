@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RecipeSchema } from "./actions";
+import { RecipeSchema } from "./schemas";
 
 export type Recipe = {
   id: string;
