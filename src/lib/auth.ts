@@ -1,6 +1,4 @@
 
-'use server';
-
 import {SignJWT, jwtVerify} from 'jose';
 import {cookies} from 'next/headers';
 import {NextRequest, NextResponse} from 'next/server';
@@ -8,7 +6,7 @@ import type {SessionPayload, User} from '@/lib/types';
 import { users as mockUsers } from './placeholder-data';
 
 const secretKey = process.env.JWT_SECRET;
-const key = new TextEncoder().encode(secretKey);
+const key = new TextEncoder().encode(secretKey!);
 const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours in milliseconds
 
 export async function encrypt(payload: SessionPayload) {
