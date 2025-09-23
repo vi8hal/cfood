@@ -1,4 +1,4 @@
-require('dotenv').config({ path: '.env.local' });
+require('dotenv').config({ path: '.env' });
 
 import { Pool } from 'pg';
 import { recipes as placeholderRecipes, users as placeholderUsers } from '../src/lib/placeholder-data';
