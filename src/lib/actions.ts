@@ -1,3 +1,4 @@
+
 'use server';
 
 import { z } from 'zod';
@@ -7,7 +8,6 @@ import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import type { FormState } from './types';
 import { revalidatePath } from 'next/cache';
-import { users as mockUsers } from './placeholder-data';
 import { RecipeSchema } from './schemas';
 import crypto from 'crypto';
 import { sendVerificationEmail } from './email';
@@ -42,38 +42,24 @@ export async function signInAction(
   const { email, password } = validatedFields.data;
 
   try {
-    // First, try to find user in the database
-    const dbResult = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
-    let user = dbResult.rows[0];
-    let passwordMatch = false;
+    const result = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
+    const user = result.rows[0];
 
-    if (user) {
-        // If user found in DB, compare password hash
-        passwordMatch = await bcrypt.compare(password, user.password);
-    } else {
-        // If not in DB, check mock users
-        const mockUser = mockUsers.find((u) => u.email === email);
-        if (mockUser) {
-            user = mockUser;
-            // Compare with mock user's hashed password
-            passwordMatch = await bcrypt.compare(password, user.password);
-        }
+    if (!user) {
+        return { status: 'error', message: 'Invalid credentials. Please try again.' };
     }
+    
+    if (!user.emailVerified) {
+        redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
+    }
+    
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
-    if (!user || !passwordMatch) {
+    if (!passwordMatch) {
       return {
         status: 'error',
         message: 'Invalid credentials. Please try again.',
       };
-    }
-    
-    // For both real and mock users, we need an ID for the session
-    if (!user.id) {
-        // This should only happen for mock users without an ID
-        return {
-            status: 'error',
-            message: 'User account is not configured correctly.',
-        };
     }
 
     await createSession(user.id);
@@ -114,11 +100,6 @@ export async function signUpAction(
     const existingUser = await pool.query('SELECT id FROM "User" WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
       return { status: 'error', message: 'A user with this email already exists.' };
-    }
-    
-    const mockUser = mockUsers.find(u => u.email === email);
-    if (mockUser) {
-       return { status: 'error', message: 'This email is reserved for a demonstration account.' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -279,8 +260,12 @@ export async function createRecipeAction(
   }
 
   revalidatePath('/recipes');
+<<<<<<< HEAD
   revalidatePath('/dashboard');
   return { status: 'success', message: 'Your recipe has been successfully submitted and is now live!' };
+=======
+  redirect('/recipes');
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 }
 
 import { getSession } from '@/lib/auth';

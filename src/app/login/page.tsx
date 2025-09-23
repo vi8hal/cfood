@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect } from 'react';
@@ -19,8 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UtensilsCrossed, LoaderCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Info } from 'lucide-react';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -72,13 +71,6 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <Alert>
-              <Info className="h-4 w-4" />
-              <AlertTitle>Demo Accounts Available</AlertTitle>
-              <AlertDescription>
-                Use any email from our mock users (e.g., <code className="font-mono bg-muted px-1 py-0.5 rounded">alice@example.com</code>) with the password <code className="font-mono bg-muted px-1 py-0.5 rounded">password123</code> to sign in.
-              </AlertDescription>
-            </Alert>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -87,12 +79,11 @@ export default function LoginPage() {
                 type="email"
                 placeholder="m@example.com"
                 required
-                defaultValue="alice@example.com"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" required defaultValue="password123" />
+              <Input id="password" name="password" type="password" required />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">

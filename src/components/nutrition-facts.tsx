@@ -1,12 +1,17 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import type { Recipe } from "@/lib/types";
 
 interface NutritionFactsProps {
-  nutrition: Recipe['nutrition'];
+  nutrition?: Recipe['nutrition'];
 }
 
 export function NutritionFacts({ nutrition }: NutritionFactsProps) {
+  if (!nutrition) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>

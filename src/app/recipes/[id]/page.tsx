@@ -1,3 +1,4 @@
+
 import type { Recipe as RecipeType } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';

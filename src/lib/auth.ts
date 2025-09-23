@@ -5,7 +5,10 @@ import {NextRequest, NextResponse} from 'next/server';
 import type {SessionPayload, User} from '@/lib/types';
 import {pool} from './db';
 import { users as mockUsers } from './placeholder-data';
+<<<<<<< HEAD
 
+=======
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 
 const secretKey = process.env.JWT_SECRET;
 const key = new TextEncoder().encode(secretKey!);
@@ -34,8 +37,13 @@ export async function decrypt(input: string): Promise<SessionPayload | null> {
 export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
+<<<<<<< HEAD
   const cookieStore = await cookies();
   cookieStore.set('session', session, {
+=======
+  
+  cookies().set('session', session, {
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -43,15 +51,23 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
+<<<<<<< HEAD
   const cookieStore = await cookies();
   cookieStore.set('session', '', {expires: new Date(0)});
+=======
+  cookies().set('session', '', {expires: new Date(0)});
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
 }
 
 export async function getSession(): Promise<{
   user: User;
 } | null> {
+<<<<<<< HEAD
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('session')?.value;
+=======
+  const sessionCookie = cookies().get('session')?.value;
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
   if (!sessionCookie) return null;
 
   const sessionPayload = await decrypt(sessionCookie);
@@ -60,6 +76,7 @@ export async function getSession(): Promise<{
   }
 
   try {
+<<<<<<< HEAD
     // First, check the database for a real user
     const result = await pool.query('SELECT * FROM "User" WHERE id = $1', [
       sessionPayload.userId,
@@ -81,23 +98,52 @@ export async function getSession(): Promise<{
 
     if (!user) {
       return null;
+=======
+    // Check real users first
+    const result = await pool.query('SELECT * FROM "User" WHERE id = $1', [
+      sessionPayload.userId,
+    ]);
+    
+    if (result.rows.length > 0) {
+        const user = result.rows[0];
+         // Omit password from the user object returned to the app
+        const { password, ...userWithoutPassword } = user;
+        return {
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            location: user.location,
+            emailVerified: user.emailVerified,
+            createdAt: user.createdat,
+            updatedAt: user.updatedat,
+          },
+        };
+    }
+    
+    // Fallback to mock users if not found in DB
+    const mockUser = mockUsers.find(u => u.id === sessionPayload.userId);
+    if (mockUser) {
+        const { password, ...userWithoutPassword } = mockUser as any;
+         return {
+          user: {
+            id: userWithoutPassword.id,
+            name: userWithoutPassword.name,
+            email: userWithoutPassword.email,
+            image: userWithoutPassword.image,
+            location: userWithoutPassword.location,
+            // Mock users are considered verified
+            emailVerified: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        };
+>>>>>>> 210ca03 (i have deleted the mock users data from database, so now  implement secu)
     }
 
-    // Omit password from the user object returned to the app
-    const { password, ...userWithoutPassword } = user;
+    return null;
 
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
-        location: user.location,
-        emailVerified: user.emailVerified,
-        createdAt: user.createdat,
-        updatedAt: user.updatedat,
-      },
-    };
   } catch (error) {
     console.error('Failed to fetch user for session:', error);
     return null;
