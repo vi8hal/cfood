@@ -34,7 +34,7 @@ export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
   
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('session', session, {
     expires,
     httpOnly: true,
@@ -43,7 +43,7 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   cookieStore.set('session', '', {expires: new Date(0)});
 }
 
@@ -90,7 +90,7 @@ export async function getSession(): Promise<{
           user: {
             id: userWithoutPassword.id,
             name: userWithoutPassword.name,
-            email: userWithoutPassword.email,
+            email: userWithoutowned.email,
             image: userWithoutPassword.image,
             location: userWithoutPassword.location,
             // Mock users are considered verified
