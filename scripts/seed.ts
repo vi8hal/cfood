@@ -1,7 +1,7 @@
 require('dotenv').config({ path: '.env.local' });
 
 import { Pool } from 'pg';
-import { recipes as placeholderRecipes } from '../src/lib/placeholder-data';
+import { recipes as placeholderRecipes, users as placeholderUsers } from '../src/lib/placeholder-data';
 import bcrypt from 'bcryptjs';
 
 const pool = new Pool({
@@ -11,13 +11,6 @@ const pool = new Pool({
 async function setupTables(client: Pool) {
   try {
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
-    // Drop tables with CASCADE to handle dependencies
-    await client.query(`DROP TABLE IF EXISTS "User" CASCADE;`);
-    console.log('Dropped "User" table and dependent tables.');
-    await client.query(`DROP TABLE IF EXISTS "OTP";`); // Drop OTP separately in case User drop fails
-    console.log('Dropped "OTP" table.');
-
-
     // Create User table
     await client.query(`
       CREATE TABLE IF NOT EXISTS "User" (
@@ -32,7 +25,7 @@ async function setupTables(client: Pool) {
         "updatedAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log(`Created "User" table`);
+    console.log(`Ensured "User" table exists.`);
 
     // Create Recipe table
     await client.query(`
@@ -54,7 +47,7 @@ async function setupTables(client: Pool) {
         contact VARCHAR(255)
       );
     `);
-    console.log(`Created "Recipe" table`);
+    console.log(`Ensured "Recipe" table exists.`);
 
     // Create OTP table
     await client.query(`
@@ -66,7 +59,7 @@ async function setupTables(client: Pool) {
           "createdAt" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
       );
     `);
-    console.log(`Created "OTP" table`);
+    console.log(`Ensured "OTP" table exists.`);
 
   } catch (error) {
     console.error('Error setting up tables:', error);
@@ -74,40 +67,44 @@ async function setupTables(client: Pool) {
   }
 }
 
-// Optional: a function to seed recipes if there are users in the db.
-// This is separate because we are not seeding users anymore.
-async function seedRecipesIfUsersExist(client: Pool) {
-    const userCountRes = await client.query('SELECT COUNT(*) FROM "User"');
-    const userCount = parseInt(userCountRes.rows[0].count, 10);
-    
-    if (userCount === 0) {
-        console.log("User table is empty. Skipping recipe seeding.");
+async function seedUsers(client: Pool) {
+  const userCountRes = await client.query('SELECT COUNT(*) FROM "User"');
+  if (parseInt(userCountRes.rows[0].count, 10) > 0) {
+    console.log('User table is not empty. Skipping user seeding.');
+    return;
+  }
+
+  console.log('Seeding users...');
+  const insertedUsers = await Promise.all(
+    placeholderUsers.map(async (user) => {
+      return client.query(
+        `
+        INSERT INTO "User" (id, name, email, password, image, location)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        ON CONFLICT (id) DO NOTHING;
+      `,
+        [user.id, user.name, user.email, user.password, user.image, user.location]
+      );
+    })
+  );
+  console.log(`Seeded ${insertedUsers.length} users.`);
+}
+
+
+async function seedRecipes(client: Pool) {
+    const recipeCountRes = await client.query('SELECT COUNT(*) FROM "Recipe"');
+    if (parseInt(recipeCountRes.rows[0].count, 10) > 0) {
+        console.log("Recipe table is not empty. Skipping recipe seeding.");
         return;
     }
 
-    console.log(`${userCount} users found. Seeding recipes.`);
-     const recipeCount = await client.query('SELECT COUNT(*) FROM "Recipe"');
-      if (parseInt(recipeCount.rows[0].count, 10) > 0) {
-          console.log('Recipes table is not empty. Skipping seeding recipes.');
-          return;
-      }
-      
-      const usersResult = await client.query('SELECT * from "User"');
-      const dbUsers = usersResult.rows;
-
+    console.log(`Seeding recipes...`);
       const insertedRecipes = await Promise.all(
         placeholderRecipes.map(async (recipe) => {
-          // This will now use the pre-seeded mock users
-          const author = dbUsers.find(u => u.name === recipe.authorName);
-          if (!author) {
-            console.warn(`Author "${recipe.authorName}" not found for recipe "${recipe.title}". Skipping.`);
-            return;
-          }
-          
           return client.query(
             `
             INSERT INTO "Recipe" (title, description, ingredients, instructions, tags, "prepTime", "cookTime", servings, price, "authorId", location)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, (SELECT location FROM "User" WHERE id = $10))
             ON CONFLICT (id) DO NOTHING;
           `,
             [
@@ -120,8 +117,7 @@ async function seedRecipesIfUsersExist(client: Pool) {
               recipe.cookTime,
               recipe.servings,
               recipe.price,
-              author.id,
-              author.location, // Use author's location for the recipe location
+              recipe.authorId,
             ]
           );
         }),
@@ -135,14 +131,13 @@ async function main() {
   const client = await pool.connect();
 
   try {
+    // We create tables first to ensure they exist.
     await setupTables(pool);
-    // Note: We no longer seed users here, as the sign-in can handle mock users
-    // and the sign-up handles real users.
-    console.log("Database tables are set up. The application is ready for user sign-ups.");
-    console.log("You can also log in using one of the mock accounts from placeholder-data.ts.");
-
-    // You could optionally seed some initial data here if needed, for example, recipes for mock users
-    // if you first seed the mock users. But based on the prompt, we keep it clean.
+    // Then we seed the initial data if the tables are empty.
+    await seedUsers(pool);
+    await seedRecipes(pool);
+    
+    console.log("Database seeding completed successfully.");
 
   } catch (error) {
     console.error(
