@@ -34,7 +34,8 @@ export async function createSession(userId: string) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = await encrypt({userId, expires: expires.toISOString()});
   
-  cookies().set('session', session, {
+  const cookieStore = cookies();
+  cookieStore.set('session', session, {
     expires,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -42,7 +43,8 @@ export async function createSession(userId: string) {
 }
 
 export async function deleteSession() {
-  cookies().set('session', '', {expires: new Date(0)});
+  const cookieStore = cookies();
+  cookieStore.set('session', '', {expires: new Date(0)});
 }
 
 export async function getSession(): Promise<{

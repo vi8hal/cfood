@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache';
 import { RecipeSchema } from './schemas';
 import crypto from 'crypto';
 import { sendVerificationEmail } from './email';
+import { users as mockUsers } from './placeholder-data';
 
 const SignInSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email.' }),
@@ -42,27 +43,41 @@ export async function signInAction(
   const { email, password } = validatedFields.data;
 
   try {
+    // Check for real user in DB first
     const result = await pool.query('SELECT * FROM "User" WHERE email = $1', [email]);
     const user = result.rows[0];
 
-    if (!user) {
-        return { status: 'error', message: 'Invalid credentials. Please try again.' };
-    }
-    
-    if (!user.emailVerified) {
-        redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
-    }
-    
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (user) {
+      if (!user.emailVerified) {
+          redirect(`/verify-otp?email=${encodeURIComponent(email)}`);
+      }
+      
+      const passwordMatch = await bcrypt.compare(password, user.password);
 
-    if (!passwordMatch) {
-      return {
+      if (passwordMatch) {
+        await createSession(user.id);
+        revalidatePath('/dashboard');
+        return { status: 'success', message: 'Sign-in successful!' };
+      }
+    }
+
+    // Fallback to mock users if not found in DB or password doesn't match
+    const mockUser = mockUsers.find(u => u.email === email);
+    if (mockUser) {
+        const passwordMatch = await bcrypt.compare(password, mockUser.password);
+        if (passwordMatch) {
+            await createSession(mockUser.id);
+            revalidatePath('/dashboard');
+            return { status: 'success', message: 'Sign-in successful!' };
+        }
+    }
+
+    // If neither real nor mock user is found/authenticated
+    return {
         status: 'error',
         message: 'Invalid credentials. Please try again.',
       };
-    }
 
-    await createSession(user.id);
   } catch (error) {
     console.error('Sign-in error:', error);
     return {
@@ -70,9 +85,6 @@ export async function signInAction(
       message: 'An unexpected error occurred. Please try again.',
     };
   }
-
-  revalidatePath('/dashboard');
-  return { status: 'success', message: 'Sign-in successful!' };
 }
 
 export async function signOutAction() {
