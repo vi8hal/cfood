@@ -44,7 +44,7 @@ export default function LoginPage() {
     if (state?.status === 'success') {
       toast({
         title: 'Sign-In Successful',
-        description: state.message,
+        description: 'Welcome back!',
       });
       router.push('/dashboard');
     } else if (state?.status === 'error' && state.message) {
@@ -74,9 +74,9 @@ export default function LoginPage() {
           <CardContent className="space-y-4">
              <Alert>
               <Info className="h-4 w-4" />
-              <AlertTitle>Demo Accounts</AlertTitle>
+              <AlertTitle>Demo Accounts Available</AlertTitle>
               <AlertDescription>
-                Use any email from our mock users (e.g., <code className="font-mono bg-muted px-1 py-0.5 rounded">alice@example.com</code>) with the password <code className="font-mono bg-muted px-1 py-0.5 rounded">password123</code>.
+                Use any email from our mock users (e.g., <code className="font-mono bg-muted px-1 py-0.5 rounded">alice@example.com</code>) with the password <code className="font-mono bg-muted px-1 py-0.5 rounded">password123</code> to sign in.
               </AlertDescription>
             </Alert>
             <div className="space-y-2">
@@ -97,7 +97,7 @@ export default function LoginPage() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <SubmitButton />
-             {state?.status === 'error' && state.message && (
+             {state?.status === 'error' && state.message && !state.fieldErrors && (
                 <p className="text-sm text-destructive text-center">{state.message}</p>
             )}
              <p className="text-center text-sm text-muted-foreground">

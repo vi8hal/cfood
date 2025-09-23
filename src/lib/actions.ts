@@ -56,7 +56,7 @@ export async function signInAction(
         if (mockUser) {
             user = mockUser;
             // Compare with mock user's hashed password
-            passwordMatch = await bcrypt.compare(password, mockUser.password);
+            passwordMatch = await bcrypt.compare(password, user.password);
         }
     }
 
@@ -65,6 +65,15 @@ export async function signInAction(
         status: 'error',
         message: 'Invalid credentials. Please try again.',
       };
+    }
+    
+    // For both real and mock users, we need an ID for the session
+    if (!user.id) {
+        // This should only happen for mock users without an ID
+        return {
+            status: 'error',
+            message: 'User account is not configured correctly.',
+        };
     }
 
     await createSession(user.id);
@@ -105,6 +114,11 @@ export async function signUpAction(
     const existingUser = await pool.query('SELECT id FROM "User" WHERE email = $1', [email]);
     if (existingUser.rows.length > 0) {
       return { status: 'error', message: 'A user with this email already exists.' };
+    }
+    
+    const mockUser = mockUsers.find(u => u.email === email);
+    if (mockUser) {
+       return { status: 'error', message: 'This email is reserved for a demonstration account.' };
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

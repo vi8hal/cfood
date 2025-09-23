@@ -39,6 +39,7 @@ export default function SignUpPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // This action redirects on success, so we only need to handle errors.
     if (state?.status === 'error' && state.message) {
       toast({
         variant: 'destructive',
@@ -46,7 +47,7 @@ export default function SignUpPage() {
         description: state.message,
       });
     }
-  }, [state, toast, router]);
+  }, [state, toast]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-secondary/50 p-4">
@@ -88,12 +89,12 @@ export default function SignUpPage() {
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required />
             </div>
+             {state?.status === 'error' && state.message && !state.fieldErrors && (
+                <p className="text-sm text-destructive text-center">{state.message}</p>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <SubmitButton />
-            {state?.status === 'error' && state.message && (
-                <p className="text-sm text-destructive text-center">{state.message}</p>
-            )}
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{' '}
               <Link href="/login" className="underline hover:text-primary">
